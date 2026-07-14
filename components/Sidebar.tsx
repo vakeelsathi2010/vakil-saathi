@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -112,18 +112,16 @@ function SidebarContent({ pathname, language, advocateName, isGuest, onClick, on
 export default function Sidebar({ advocateName, isGuest = false }: SidebarProps) {
   const pathname = usePathname()
   const { language } = useLanguage()
-  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   async function handleLogout() {
-    document.cookie = 'vakil_guest=; path=/; max-age=0; samesite=lax'
+    await fetch('/api/guest-session', { method: 'DELETE' })
     if (!isGuest) {
       const supabase = createClient()
       await supabase.auth.signOut()
     }
     toast.success('Logout ho gaya')
-    router.push('/login')
-    router.refresh()
+    window.location.assign('/login')
   }
 
   return (

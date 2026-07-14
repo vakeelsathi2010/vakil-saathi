@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import {
   BadgeCheck,
   Building2,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { ensureAdvocateProfile } from '@/lib/supabase/ensure-advocate'
 import LanguageToggle from '@/components/LanguageToggle'
 import { useLanguage } from '@/components/LanguageProvider'
 
@@ -44,7 +44,6 @@ const fieldClass =
   'h-14 w-full rounded-xl border border-[#e4dfed] bg-white pl-12 pr-4 text-[#211a30] shadow-[0_7px_18px_rgba(63,41,104,0.10)] transition placeholder:text-[#aaa3b7] focus:border-[#7c4df1] focus:ring-4 focus:ring-[#7c4df1]/10'
 
 export default function RegisterPage() {
-  const router = useRouter()
   const { isHindi } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
@@ -78,7 +77,16 @@ export default function RegisterPage() {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: {
+          full_name: fullName,
+          phone,
+          bci_number: bciNumber || null,
+          bar_association: barAssociation,
+          primary_court: court,
+          courts: [court],
+        },
+      },
     })
 
     if (authError) {
@@ -87,27 +95,31 @@ export default function RegisterPage() {
       return
     }
 
-    if (authData.user) {
-      const { error: profileError } = await supabase.from('advocates').insert({
-        user_id: authData.user.id,
-        full_name: fullName,
-        phone,
-        bci_number: bciNumber || null,
-        bar_association: barAssociation,
-        courts: [court],
-      })
-
-      if (profileError) {
-        toast.error('Profile save karne mein dikkat aayi: ' + profileError.message)
-        setLoading(false)
-        return
-      }
+    if (!authData.session) {
+      await fetch('/api/guest-session', { method: 'DELETE' })
+      toast.success('Account ban gaya. Email verify karke login karein.')
+      window.location.assign('/login?registered=1')
+      return
     }
 
-    document.cookie = 'vakil_guest=; path=/; max-age=0; samesite=lax'
+    if (!authData.user) {
+      toast.error('Account session nahi bani. Dobara login karein.')
+      setLoading(false)
+      return
+    }
+
+    const { error: profileError } = await ensureAdvocateProfile(
+      supabase,
+      authData.user
+    )
+    if (profileError) {
+      // The dashboard retries profile creation. Do not block a valid session.
+      console.warn('Profile setup will be retried on dashboard:', profileError)
+    }
+
+    await fetch('/api/guest-session', { method: 'DELETE' })
     toast.success('Registration ho gayi! 🎉')
-    router.push('/dashboard')
-    router.refresh()
+    window.location.assign('/dashboard')
   }
 
   return (

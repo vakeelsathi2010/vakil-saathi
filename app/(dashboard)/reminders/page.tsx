@@ -28,8 +28,9 @@ export default function RemindersPage() {
   const fetchLogs = useCallback(async () => {
     const supabase = createClient()
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
+    const user = session?.user ?? null
     if (!user) {
       setLogs([])
       setLoading(false)

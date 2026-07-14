@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { ensureAdvocateProfile } from '@/lib/supabase/ensure-advocate'
 import {
   getHearingUrgency,
   urgencyColor,
@@ -13,8 +14,9 @@ import { Briefcase, Users, Calendar, Bell, Plus, AlertCircle } from 'lucide-reac
 export default async function DashboardPage() {
   const supabase = await createClient()
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
+  const user = session?.user ?? null
   const cookieStore = await cookies()
   const isGuest = cookieStore.get('vakil_guest')?.value === '1'
   const isHindi = cookieStore.get('vakil_language_v2')?.value === 'hi'
@@ -22,13 +24,21 @@ export default async function DashboardPage() {
   if (!user && isGuest) return <GuestDashboard isHindi={isHindi} />
   if (!user) redirect('/login')
 
-  const { data: advocate } = await supabase
-    .from('advocates')
-    .select('id, full_name')
-    .eq('user_id', user.id)
-    .single()
+  const { advocate, error: profileError } = await ensureAdvocateProfile(
+    supabase,
+    user
+  )
 
-  if (!advocate) redirect('/login')
+  if (!advocate) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
+        <h1 className="font-semibold">Profile could not be prepared</h1>
+        <p className="mt-1 text-sm">
+          Please refresh once. {profileError ? `Error: ${profileError}` : ''}
+        </p>
+      </div>
+    )
+  }
 
   const today = new Date().toISOString().split('T')[0]
 

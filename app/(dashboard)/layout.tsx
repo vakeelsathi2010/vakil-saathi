@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { ensureAdvocateProfile } from '@/lib/supabase/ensure-advocate'
 import Sidebar from '@/components/Sidebar'
 
 export default async function DashboardLayout({
@@ -10,19 +11,16 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient()
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
+  const user = session?.user ?? null
   const isGuest = (await cookies()).get('vakil_guest')?.value === '1'
 
   if (!user && !isGuest) redirect('/login')
 
-  const { data: advocate } = user
-    ? await supabase
-        .from('advocates')
-        .select('full_name')
-        .eq('user_id', user.id)
-        .single()
-    : { data: null }
+  const advocate = user
+    ? (await ensureAdvocateProfile(supabase, user)).advocate
+    : null
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">

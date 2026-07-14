@@ -2,53 +2,81 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, LockKeyhole, Mail, Scale } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { ensureAdvocateProfile } from '@/lib/supabase/ensure-advocate'
 import LanguageToggle from '@/components/LanguageToggle'
 import { useLanguage } from '@/components/LanguageProvider'
 
 export default function LoginPage() {
-  const router = useRouter()
   const { isHindi } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [loginError, setLoginError] = useState('')
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setLoginError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      toast.error(
-        error.message === 'Invalid login credentials'
+      const isUnconfirmed = error.message
+        .toLowerCase()
+        .includes('email not confirmed')
+      const message = isUnconfirmed
+          ? 'Pehle apne email inbox se account verify karein'
+          : error.message === 'Invalid login credentials'
           ? 'Email ya password galat hai'
           : error.message
-      )
+      setLoginError(message)
+      toast.error(message)
       setLoading(false)
       return
     }
 
-    toast.success('Login ho gaya! 🎉')
-    document.cookie = 'vakil_guest=; path=/; max-age=0; samesite=lax'
-    router.push('/dashboard')
-    router.refresh()
+    if (!data.user) {
+      const message = 'Login session nahi bani. Dobara login karein.'
+      setLoginError(message)
+      toast.error(message)
+      setLoading(false)
+      return
+    }
+
+    const { error: profileError } = await ensureAdvocateProfile(
+      supabase,
+      data.user
+    )
+    if (profileError) {
+      // Authentication has succeeded. The dashboard retries profile creation,
+      // so a profile error must not trap a valid user on the login page.
+      console.warn('Profile setup will be retried on dashboard:', profileError)
+    }
+
+    await fetch('/api/guest-session', { method: 'DELETE' })
+    toast.success('Login ho gaya!')
+    window.location.assign('/dashboard')
   }
 
-  function handleGuestLogin() {
+  async function handleGuestLogin() {
     // Guest access lasts only for the current browser session. Each new guest
     // login starts with a completely empty workspace.
-    document.cookie = 'vakil_guest=1; path=/; samesite=lax'
     localStorage.removeItem('vakil_guest_cases')
     localStorage.removeItem('vakil_guest_manual_whatsapp_reminders')
     sessionStorage.clear()
+    setLoading(true)
+    const response = await fetch('/api/guest-session', { method: 'POST' })
+    if (!response.ok) {
+      toast.error('Guest mode start nahi hua. Dobara try karein.')
+      setLoading(false)
+      return
+    }
     toast.success('Guest mode mein swagat hai')
-    router.push('/dashboard')
-    router.refresh()
+    window.location.assign('/dashboard')
   }
 
   return (
@@ -147,6 +175,12 @@ export default function LoginPage() {
             >
               {isHindi ? 'गेस्ट के रूप में प्रवेश करें' : 'Login as Guest'}
             </button>
+
+            {loginError && (
+              <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {loginError}
+              </div>
+            )}
           </form>
 
           <div className="my-7 flex items-center gap-3 text-xs text-[#948da0]">
