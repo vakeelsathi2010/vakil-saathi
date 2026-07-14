@@ -14,10 +14,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const language = (await cookies()).get('vakil_language')?.value === 'hi' ? 'hi' : 'en'
+  // v2 intentionally resets every existing browser to English once. Future
+  // language choices still persist through the new cookie.
+  const language = (await cookies()).get('vakil_language_v2')?.value === 'hi' ? 'hi' : 'en'
 
   return (
-    <html lang="hi" className="h-full">
+    <html lang={language} className="h-full">
       <body className="h-full antialiased bg-gray-50">
         <LanguageProvider initialLanguage={language}>
           <Toaster

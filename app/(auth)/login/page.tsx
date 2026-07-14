@@ -40,7 +40,12 @@ export default function LoginPage() {
   }
 
   function handleGuestLogin() {
-    document.cookie = 'vakil_guest=1; path=/; max-age=86400; samesite=lax'
+    // Guest access lasts only for the current browser session. Each new guest
+    // login starts with a completely empty workspace.
+    document.cookie = 'vakil_guest=1; path=/; samesite=lax'
+    localStorage.removeItem('vakil_guest_cases')
+    localStorage.removeItem('vakil_guest_manual_whatsapp_reminders')
+    sessionStorage.clear()
     toast.success('Guest mode mein swagat hai')
     router.push('/dashboard')
     router.refresh()

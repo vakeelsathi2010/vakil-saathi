@@ -27,7 +27,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       <Sidebar advocateName={isGuest ? 'Guest User' : advocate?.full_name} isGuest={isGuest} />
-      <main className="flex-1 overflow-y-auto pt-14 lg:pt-0">
+      <main className="flex-1 overflow-y-auto pt-14 pb-24 lg:pt-0 lg:pb-0">
         <div className="max-w-5xl mx-auto px-5 py-6">
           {children}
         </div>

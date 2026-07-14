@@ -19,7 +19,7 @@ export function LanguageProvider({ children, initialLanguage = 'en' }: { childre
 
   function setLanguage(nextLanguage: Language) {
     updateLanguage(nextLanguage)
-    document.cookie = `vakil_language=${nextLanguage}; path=/; max-age=31536000; samesite=lax`
+    document.cookie = `vakil_language_v2=${nextLanguage}; path=/; max-age=31536000; samesite=lax`
     router.refresh()
   }
 

@@ -17,7 +17,7 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
   const cookieStore = await cookies()
   const isGuest = cookieStore.get('vakil_guest')?.value === '1'
-  const isHindi = cookieStore.get('vakil_language')?.value === 'hi'
+  const isHindi = cookieStore.get('vakil_language_v2')?.value === 'hi'
   if (!user && !isGuest) redirect('/login')
   if (!user && isGuest) return <GuestDashboard isHindi={isHindi} />
   if (!user) redirect('/login')
@@ -262,11 +262,11 @@ export default async function DashboardPage() {
 }
 
 function GuestDashboard({ isHindi }: { isHindi: boolean }) {
-  const demoStats = [
-    { label: isHindi ? 'सक्रिय मुकदमे' : 'Active Cases', value: 20, icon: Briefcase, bg: 'bg-blue-500', href: '/dashboard/cases' },
-    { label: isHindi ? 'कुल मुवक्किल' : 'Total Clients', value: 20, icon: Users, bg: 'bg-green-500', href: '/dashboard/clients' },
-    { label: isHindi ? 'आने वाली पेशियाँ' : 'Upcoming Hearings', value: 20, icon: Calendar, bg: 'bg-orange-500', href: '/dashboard/hearings' },
-    { label: isHindi ? 'भेजे गए रिमाइंडर' : 'Reminders Sent', value: 20, icon: Bell, bg: 'bg-purple-500', href: '/dashboard/reminders' },
+  const emptyStats = [
+    { label: isHindi ? 'सक्रिय मुकदमे' : 'Active Cases', value: 0, icon: Briefcase, bg: 'bg-blue-500', href: '/dashboard/cases' },
+    { label: isHindi ? 'कुल मुवक्किल' : 'Total Clients', value: 0, icon: Users, bg: 'bg-green-500', href: '/dashboard/clients' },
+    { label: isHindi ? 'आने वाली पेशियाँ' : 'Upcoming Hearings', value: 0, icon: Calendar, bg: 'bg-orange-500', href: '/dashboard/hearings' },
+    { label: isHindi ? 'भेजे गए रिमाइंडर' : 'Reminders Sent', value: 0, icon: Bell, bg: 'bg-purple-500', href: '/dashboard/reminders' },
   ]
 
   return (
@@ -274,7 +274,7 @@ function GuestDashboard({ isHindi }: { isHindi: boolean }) {
       <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
         <p className="font-semibold text-purple-800">{isHindi ? 'आप गेस्ट मोड में हैं' : 'You are exploring Guest Mode'}</p>
         <p className="mt-1 text-sm text-purple-600">
-          {isHindi ? 'यह डेमो डैशबोर्ड है। अपना डेटा सेव करने और रिमाइंडर भेजने के लिए मुफ़्त अकाउंट बनाएँ।' : 'This is a demo dashboard. Create a free account to save your data and send reminders.'}
+          {isHindi ? 'यह एक खाली अस्थायी workspace है। स्थायी रूप से डेटा सेव करने के लिए मुफ़्त अकाउंट बनाएँ।' : 'This is an empty temporary workspace. Create a free account to save your data permanently.'}
         </p>
         <Link href="/register" className="mt-3 inline-flex rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
           {isHindi ? 'मुफ़्त अकाउंट बनाएँ' : 'Create Free Account'}
@@ -283,11 +283,11 @@ function GuestDashboard({ isHindi }: { isHindi: boolean }) {
 
       <div>
         <h1 className="text-xl font-bold text-gray-900">{isHindi ? 'प्रणाम, गेस्ट जी!' : 'Welcome, Guest!'} 👋</h1>
-        <p className="mt-0.5 text-sm text-gray-500">{isHindi ? 'VakilSaathi डैशबोर्ड का पूरा डेमो देखें' : 'Explore the complete VakilSaathi dashboard demo'}</p>
+        <p className="mt-0.5 text-sm text-gray-500">{isHindi ? 'अपना पहला मुकदमा या मुवक्किल जोड़कर शुरू करें' : 'Start by adding your first case or client'}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {demoStats.map(({ label, value, icon: Icon, bg, href }) => (
+        {emptyStats.map(({ label, value, icon: Icon, bg, href }) => (
           <Link key={label} href={href} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md">
             <div className={`${bg} flex-shrink-0 rounded-xl p-2.5`}>
               <Icon className="h-5 w-5 text-white" />
@@ -302,9 +302,9 @@ function GuestDashboard({ isHindi }: { isHindi: boolean }) {
 
       <div className="rounded-xl border border-gray-100 bg-white p-8 text-center shadow-sm">
         <Calendar className="mx-auto mb-3 h-10 w-10 text-purple-400" />
-        <h2 className="font-semibold text-gray-900">{isHindi ? 'डेमो वर्कस्पेस तैयार है' : 'Your demo workspace is ready'}</h2>
+        <h2 className="font-semibold text-gray-900">{isHindi ? 'आपका workspace अभी खाली है' : 'Your workspace is empty'}</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
-          {isHindi ? 'साइडबार से मुकदमे, मुवक्किल, पेशी की तारीखें और रिमाइंडर देखें।' : 'Use the sidebar to explore cases, clients, hearing dates, and reminders.'}
+          {isHindi ? 'Cases Diary या Clients में जाकर अपना पहला रिकॉर्ड जोड़ें।' : 'Open Cases Diary or Clients to add your first record.'}
         </p>
       </div>
     </div>

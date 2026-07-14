@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { formatDate, getHearingUrgency, urgencyColor, urgencyLabel } from '@/lib/utils'
 import { ArrowLeft, Calendar, User, Gavel } from 'lucide-react'
 import { cookies } from 'next/headers'
-import { DEMO_CASES, DEMO_CLIENTS, DEMO_HEARINGS } from '@/lib/demo-data'
 
 interface CaseDetailData {
   id: string
@@ -33,44 +32,31 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser()
   const cookieStore = await cookies()
   const isGuest = cookieStore.get('vakil_guest')?.value === '1'
-  const isHindi = cookieStore.get('vakil_language')?.value === 'hi'
+  const isHindi = cookieStore.get('vakil_language_v2')?.value === 'hi'
+
+  if (!user && isGuest) redirect('/dashboard/cases')
 
   let caseData: CaseDetailData | null = null
   let hearings: HearingDetailData[] | null = null
 
-  if (!user && isGuest) {
-    const demoIndex = DEMO_CASES.findIndex((item) => item.id === id)
-    if (demoIndex >= 0) {
-      caseData = {
-        ...DEMO_CASES[demoIndex],
-        notes: 'Client documents verified. Prepare the file and confirm attendance before the next hearing.',
-        clients: {
-          full_name: DEMO_CLIENTS[demoIndex].full_name,
-          phone: DEMO_CLIENTS[demoIndex].phone,
-        },
-      }
-      hearings = DEMO_HEARINGS.filter((item) => item.cases.id === id)
-    }
-  } else {
-    if (!user) redirect('/login')
-    const { data: advocate } = await supabase.from('advocates').select('id').eq('user_id', user.id).single()
-    if (!advocate) redirect('/login')
+  if (!user) redirect('/login')
+  const { data: advocate } = await supabase.from('advocates').select('id').eq('user_id', user.id).single()
+  if (!advocate) redirect('/login')
 
-    const { data } = await supabase
-      .from('cases')
-      .select('*, clients(*)')
-      .eq('id', id)
-      .eq('advocate_id', advocate.id)
-      .single()
-    caseData = data as CaseDetailData | null
+  const { data } = await supabase
+    .from('cases')
+    .select('*, clients(*)')
+    .eq('id', id)
+    .eq('advocate_id', advocate.id)
+    .single()
+  caseData = data as CaseDetailData | null
 
-    const { data: hearingData } = await supabase
-      .from('hearings')
-      .select('*')
-      .eq('case_id', id)
-      .order('hearing_date', { ascending: false })
-    hearings = hearingData as HearingDetailData[] | null
-  }
+  const { data: hearingData } = await supabase
+    .from('hearings')
+    .select('*')
+    .eq('case_id', id)
+    .order('hearing_date', { ascending: false })
+  hearings = hearingData as HearingDetailData[] | null
 
   if (!caseData) notFound()
 

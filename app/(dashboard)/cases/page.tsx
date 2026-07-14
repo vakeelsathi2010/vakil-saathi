@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Briefcase, ChevronRight, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { DEMO_CASES } from '@/lib/demo-data'
 import { useLanguage } from '@/components/LanguageProvider'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -50,6 +49,7 @@ export default function CasesPage() {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [isGuest, setIsGuest] = useState(false)
   const [advocateId, setAdvocateId] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState('All')
 
@@ -79,7 +79,8 @@ export default function CasesPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        setCases(DEMO_CASES)
+        setIsGuest(true)
+        setCases([])
         setLoading(false)
         return
       }
@@ -92,9 +93,28 @@ export default function CasesPage() {
     init()
   }, [fetchCases])
 
-  async function handleAddCase(e: React.FormEvent) {
+  async function handleAddCase(e: React.SyntheticEvent) {
     e.preventDefault()
-    if (!advocateId) return
+
+    if (!form.case_number.trim()) {
+      toast.error('Case number zaroori hai')
+      return
+    }
+
+    if (isGuest || !advocateId) {
+      setSaving(true)
+      const newCase: Case = {
+        id: `guest-case-${Date.now()}`,
+        ...form,
+      }
+      setCases(previousCases => [newCase, ...previousCases])
+      toast.success('Case add ho gaya! ✅')
+      setShowModal(false)
+      setForm({ case_number: '', case_title: '', court_name: 'District Court, Kanpur Nagar', judge_name: '', case_type: 'Civil', opposite_party: '', status: 'Active' })
+      setSaving(false)
+      return
+    }
+
     setSaving(true)
     const supabase = createClient()
     const { error } = await supabase.from('cases').insert({ ...form, advocate_id: advocateId })
@@ -111,6 +131,13 @@ export default function CasesPage() {
 
   async function handleDelete(caseId: string, caseNumber: string) {
     if (!confirm(`Case "${caseNumber}" delete karna chahte hain?`)) return
+
+    if (isGuest || !advocateId) {
+      setCases(previousCases => previousCases.filter(c => c.id !== caseId))
+      toast.success('Case delete ho gaya')
+      return
+    }
+
     const supabase = createClient()
     const { error } = await supabase.from('cases').delete().eq('id', caseId)
     if (error) toast.error('Delete nahi hua')
@@ -158,7 +185,7 @@ export default function CasesPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">{isHindi ? 'मुकदमे' : 'Cases'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{isHindi ? 'मुकदमे' : 'Cases Diary'}</h1>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium"
@@ -300,7 +327,7 @@ export default function CasesPage() {
                   className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition text-sm">
                   Cancel
                 </button>
-                <button type="submit" disabled={saving}
+                <button type="button" onClick={handleAddCase} disabled={saving}
                   className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-60 transition text-sm">
                   {saving ? 'Save ho raha hai...' : 'Case Save Karein ✅'}
                 </button>

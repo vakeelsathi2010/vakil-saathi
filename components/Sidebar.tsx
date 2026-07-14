@@ -10,11 +10,11 @@ import LanguageToggle from '@/components/LanguageToggle'
 import { useLanguage, type Language } from '@/components/LanguageProvider'
 
 const navItems = [
-  { href: '/dashboard', en: 'Dashboard', hi: 'डैशबोर्ड', icon: LayoutDashboard },
-  { href: '/dashboard/cases', en: 'Cases', hi: 'मुकदमे', icon: Briefcase },
-  { href: '/dashboard/hearings', en: 'Hearing Dates', hi: 'पेशी की तारीखें', icon: Calendar },
-  { href: '/dashboard/clients', en: 'Clients', hi: 'मुवक्किल', icon: Users },
-  { href: '/dashboard/reminders', en: 'Reminders', hi: 'रिमाइंडर', icon: Bell },
+  { href: '/dashboard', en: 'Dashboard', mobileEn: 'Home', hi: 'डैशबोर्ड', mobileHi: 'होम', icon: LayoutDashboard },
+  { href: '/dashboard/cases', en: 'Cases Diary', mobileEn: 'Diary', hi: 'मुकदमे', mobileHi: 'मुकदमे', icon: Briefcase },
+  { href: '/dashboard/hearings', en: 'Hearing Dates', mobileEn: 'Hearings', hi: 'पेशी की तारीखें', mobileHi: 'पेशी', icon: Calendar },
+  { href: '/dashboard/clients', en: 'Clients', mobileEn: 'Clients', hi: 'मुवक्किल', mobileHi: 'मुवक्किल', icon: Users },
+  { href: '/dashboard/reminders', en: 'Reminders', mobileEn: 'Alerts', hi: 'रिमाइंडर', mobileHi: 'अलर्ट', icon: Bell },
 ]
 
 interface SidebarProps {
@@ -82,7 +82,7 @@ function SidebarContent({ pathname, language, advocateName, isGuest, onClick, on
 
       <div className="px-3 pb-4 border-t border-gray-100 pt-3 space-y-1">
         <div className="mb-2 flex justify-center text-gray-700">
-          <LanguageToggle />
+          <LanguageToggle highlightTutorial tutorialPosition="above" />
         </div>
         {advocateName && (
           <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg">
@@ -135,7 +135,7 @@ export default function Sidebar({ advocateName, isGuest = false }: SidebarProps)
           <span className="text-gray-900 font-bold text-base">VakilSaathi</span>
         </div>
         <div className="flex items-center gap-2 text-gray-700">
-          <LanguageToggle compact />
+          <LanguageToggle compact highlightTutorial tutorialPosition="below" />
           <button onClick={() => setMobileOpen(!mobileOpen)} className="text-gray-600 p-1">
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -157,6 +157,36 @@ export default function Sidebar({ advocateName, isGuest = false }: SidebarProps)
         }`}
       >
         <SidebarContent pathname={pathname} language={language} advocateName={advocateName} isGuest={isGuest} onLogout={handleLogout} onClick={() => setMobileOpen(false)} />
+      </div>
+
+      {/* Mobile Footer Navigation */}
+      <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pointer-events-none">
+        <nav
+          aria-label="Mobile navigation"
+          className="pointer-events-auto mx-auto flex h-[68px] max-w-md items-center justify-between gap-1 rounded-[24px] border border-gray-200 bg-white/95 p-2 shadow-[0_14px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl"
+        >
+          {navItems.map(({ href, en, mobileEn, mobileHi, icon: Icon }) => {
+            const active = href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
+            const label = language === 'hi' ? mobileHi : mobileEn
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-label={language === 'hi' ? mobileHi : en}
+                aria-current={active ? 'page' : undefined}
+                className={`flex h-12 shrink-0 items-center justify-center rounded-[18px] transition-all duration-200 ${
+                  active
+                    ? 'min-w-[88px] gap-2 bg-[#111827] px-3 text-white shadow-md'
+                    : 'w-11 text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.2 : 1.9} />
+                {active && <span className="whitespace-nowrap text-[11px] font-semibold">{label}</span>}
+              </Link>
+            )
+          })}
+        </nav>
       </div>
 
       {/* Desktop Sidebar */}

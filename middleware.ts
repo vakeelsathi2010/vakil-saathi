@@ -44,6 +44,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Reaching the login/register screen always ends any previous guest visit.
+  // Authenticated Supabase sessions are intentionally left untouched above.
+  if (!user && isGuest && isAuthPage) {
+    supabaseResponse.cookies.set('vakil_guest', '', {
+      path: '/',
+      maxAge: 0,
+      sameSite: 'lax',
+    })
+  }
+
   return supabaseResponse
 }
 

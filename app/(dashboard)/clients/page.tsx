@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Users, Phone, Trash2, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { DEMO_CASE_OPTIONS, DEMO_CLIENTS } from '@/lib/demo-data'
 import { useLanguage } from '@/components/LanguageProvider'
+import { maskPhone, normalizeIndianWhatsAppNumber } from '@/lib/whatsapp-link'
 import toast from 'react-hot-toast'
 
 interface Client {
@@ -32,6 +32,7 @@ export default function ClientsPage() {
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [advocateId, setAdvocateId] = useState<string | null>(null)
+  const [isGuest, setIsGuest] = useState(false)
 
   const [form, setForm] = useState({
     full_name: '',
@@ -58,8 +59,9 @@ export default function ClientsPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        setClients(DEMO_CLIENTS)
-        setCases(DEMO_CASE_OPTIONS)
+        setIsGuest(true)
+        setClients([])
+        setCases([])
         setLoading(false)
         return
       }
@@ -71,9 +73,29 @@ export default function ClientsPage() {
 
   async function handleAddClient(e: React.FormEvent) {
     e.preventDefault()
-    if (!advocateId) return
     if (!/^[6-9]\d{9}$/.test(form.phone)) {
       toast.error('Sahi 10-digit mobile number daalo')
+      return
+    }
+    if (isGuest) {
+      const selectedCase = cases.find(item => item.id === form.case_id)
+      const client: Client = {
+        id: `guest-client-${Date.now()}`,
+        full_name: form.full_name,
+        phone: form.phone,
+        address: form.address || undefined,
+        notes: form.notes || undefined,
+        consent_given: form.consent_given,
+        cases: selectedCase ? [{ case_number: selectedCase.case_number, court_name: selectedCase.court_name }] : [],
+      }
+      setClients(previous => [client, ...previous])
+      setShowModal(false)
+      setForm({ full_name: '', phone: '', address: '', case_id: '', notes: '', consent_given: false })
+      toast.success('Demo client add ho gaya')
+      return
+    }
+    if (!advocateId) {
+      toast.error('Advocate profile nahi mila')
       return
     }
     setSaving(true)
@@ -100,11 +122,10 @@ export default function ClientsPage() {
       await supabase.from('cases').update({ client_id: newClient.id }).eq('id', form.case_id)
     }
 
-    // Consent WhatsApp (sirf agar consent diya)
     if (form.consent_given) {
-      toast.success(`Client add ho gaya! Reminder bheja jaayega 📱`, { duration: 4000 })
+      toast.success('Client add ho gaya! WhatsApp consent save hua.', { duration: 4000 })
     } else {
-      toast.success('Client add ho gaya! ✅')
+      toast.success('Client add ho gaya!')
     }
 
     setShowModal(false)
@@ -115,6 +136,11 @@ export default function ClientsPage() {
 
   async function handleDelete(clientId: string, name: string) {
     if (!confirm(`Client "${name}" delete karna chahte hain?`)) return
+    if (isGuest) {
+      setClients(previous => previous.filter(client => client.id !== clientId))
+      toast.success('Demo client delete ho gaya')
+      return
+    }
     const supabase = createClient()
     const { error } = await supabase.from('clients').delete().eq('id', clientId)
     if (error) toast.error('Delete nahi hua')
@@ -171,13 +197,13 @@ export default function ClientsPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-gray-900 text-sm">{c.full_name}</p>
-                    {c.consent_given && (
-                      <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full border border-green-100">✓ Consent</span>
-                    )}
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${c.consent_given ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                      {c.consent_given ? '✓ WhatsApp consent' : 'Consent pending'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
                     <Phone className="w-3 h-3 text-gray-400" />
-                    <p className="text-gray-500 text-xs">{c.phone}</p>
+                    <p className="text-gray-500 text-xs">{maskPhone(c.phone)}</p>
                   </div>
                   {(c.cases as { case_number: string }[] | undefined)?.length ? (
                     <p className="text-gray-400 text-xs mt-0.5">
@@ -187,10 +213,16 @@ export default function ClientsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
-                <a href={`https://wa.me/91${c.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                  className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition">
-                  <MessageCircle className="w-4 h-4" />
-                </a>
+                {c.consent_given ? (
+                  <a href={`https://wa.me/${normalizeIndianWhatsAppNumber(c.phone)}`} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${c.full_name}`}
+                    className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition">
+                    <MessageCircle className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <button type="button" disabled title="WhatsApp consent pending" className="p-2 text-gray-300 cursor-not-allowed">
+                    <MessageCircle className="w-4 h-4" />
+                  </button>
+                )}
                 <a href={`tel:+91${c.phone.replace(/\D/g, '')}`}
                   className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition">
                   <Phone className="w-4 h-4" />
@@ -221,7 +253,7 @@ export default function ClientsPage() {
                   className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile / WhatsApp Number *</label>
                 <div className="flex gap-2">
                   <span className="border border-gray-300 rounded-lg px-3 py-2.5 bg-gray-50 text-gray-600 text-sm flex items-center">+91</span>
                   <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
@@ -250,7 +282,8 @@ export default function ClientsPage() {
                   <input type="checkbox" checked={form.consent_given} onChange={e => setForm(f => ({ ...f, consent_given: e.target.checked }))}
                     className="mt-1 w-4 h-4 accent-green-600" />
                   <span className="text-xs text-gray-600 leading-relaxed">
-                    <strong className="text-green-700">Client ne reminder lene ki sehmat di hai</strong> — Client ko WhatsApp/SMS reminder bhejne ki permission hai. Client se confirm kar lein.
+                    <strong className="text-green-700">Main confirm karta/karti hoon ki client ne consent diya hai.</strong>
+                    {' '}Yeh number case management aur hearing reminders ke liye WhatsApp par use ho sakta hai. Marketing message nahi bheja jayega.
                   </span>
                 </label>
               </div>

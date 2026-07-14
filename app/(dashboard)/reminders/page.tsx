@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Bell, MessageCircle, Phone, CheckCircle, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { DEMO_REMINDER_LOGS } from '@/lib/demo-data'
 import { useLanguage } from '@/components/LanguageProvider'
 
 interface ReminderLog {
@@ -32,7 +31,7 @@ export default function RemindersPage() {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) {
-      setLogs(DEMO_REMINDER_LOGS)
+      setLogs([])
       setLoading(false)
       return
     }
