@@ -21,7 +21,7 @@ interface ReminderLog {
 }
 
 export default function RemindersPage() {
-  const { isHindi } = useLanguage()
+  const { isHindi, tr } = useLanguage()
   const [logs, setLogs] = useState<ReminderLog[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -55,17 +55,19 @@ export default function RemindersPage() {
     fetchLogs()
   }, [fetchLogs])
 
-  const sentCount = logs.filter((l) => l.status === 'sent').length
+  const sentStatuses = ['sent', 'manual_sent', 'manual_case_update_sent']
+  const sentCount = logs.filter((l) => sentStatuses.includes(l.status)).length
+  const reminderCount = logs.filter((l) => l.status === 'manual_sent' || l.status === 'sent').length
+  const caseUpdateCount = logs.filter((l) => l.status === 'manual_case_update_sent').length
   const whatsappCount = logs.filter((l) => l.channel === 'whatsapp').length
-  const smsCount = logs.filter((l) => l.channel === 'sms').length
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-gray-900">{isHindi ? 'रिमाइंडर' : 'Reminders'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{tr('Client Communication', 'मुवक्किल संचार')}</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {isHindi ? 'भेजे गए सभी WhatsApp / SMS रिमाइंडर का रिकॉर्ड' : 'Complete record of sent WhatsApp / SMS reminders'}
+          {tr('Record of hearing reminders and post-hearing case updates sent to clients', 'मुवक्किलों को भेजे गए सुनवाई रिमाइंडर और सुनवाई के बाद के केस अपडेट का रिकॉर्ड')}
         </p>
       </div>
 
@@ -73,10 +75,10 @@ export default function RemindersPage() {
       {logs.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Total Bheje', value: logs.length, color: 'text-gray-900', bg: 'bg-gray-100' },
-            { label: 'Successful', value: sentCount, color: 'text-green-700', bg: 'bg-green-50' },
+            { label: tr('Total Sent', 'कुल भेजे गए'), value: sentCount, color: 'text-gray-900', bg: 'bg-gray-100' },
+            { label: tr('Hearing Reminders', 'सुनवाई रिमाइंडर'), value: reminderCount, color: 'text-orange-700', bg: 'bg-orange-50' },
+            { label: tr('Case Updates', 'केस अपडेट'), value: caseUpdateCount, color: 'text-purple-700', bg: 'bg-purple-50' },
             { label: 'WhatsApp', value: whatsappCount, color: 'text-green-700', bg: 'bg-green-50' },
-            { label: 'SMS', value: smsCount, color: 'text-blue-700', bg: 'bg-blue-50' },
           ].map((s) => (
             <div
               key={s.label}
@@ -92,16 +94,16 @@ export default function RemindersPage() {
       {/* Logs list */}
       {loading ? (
         <div className="text-center py-12 text-gray-400 text-sm">
-          Loading...
+          {tr('Loading...', 'लोड हो रहा है...')}
         </div>
       ) : logs.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
           <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <p className="text-gray-500 font-medium">
-            Abhi tak koi reminder nahi bheja
+            {tr('No reminders have been sent yet', 'अभी तक कोई रिमाइंडर नहीं भेजा गया है')}
           </p>
           <p className="text-gray-400 text-xs mt-1">
-            Peshi dates add karo — reminder automatically jaayega ek din pehle
+            {tr('Add case dates to prepare reminders before each hearing', 'हर सुनवाई से पहले रिमाइंडर तैयार करने के लिए केस की तारीखें जोड़ें')}
           </p>
         </div>
       ) : (
@@ -114,7 +116,9 @@ export default function RemindersPage() {
                 }
               | undefined
             const caseData = hearing?.cases
-            const isSent = log.status === 'sent'
+            const isSent = sentStatuses.includes(log.status)
+            const isCaseUpdate = log.status === 'manual_case_update_sent'
+            const isManual = log.status === 'manual_sent' || isCaseUpdate
 
             return (
               <div
@@ -141,7 +145,7 @@ export default function RemindersPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-medium text-gray-900 text-sm truncate">
-                        {caseData?.case_number ?? 'Case N/A'}
+                        {caseData?.case_number ?? tr('Case N/A', 'केस उपलब्ध नहीं')}
                       </p>
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
@@ -150,10 +154,13 @@ export default function RemindersPage() {
                             : 'bg-purple-50 text-purple-600'
                         }`}
                       >
-                        {log.recipient_type === 'advocate' ? 'Advocate' : 'Client'}
+                        {log.recipient_type === 'advocate' ? tr('Advocate', 'अधिवक्ता') : tr('Client', 'मुवक्किल')}
                       </span>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 uppercase">
                         {log.channel}
+                      </span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${isCaseUpdate ? 'bg-purple-50 text-purple-700' : 'bg-orange-50 text-orange-700'}`}>
+                        {isCaseUpdate ? tr('Case Update', 'केस अपडेट') : tr('Hearing Reminder', 'सुनवाई रिमाइंडर')}
                       </span>
                     </div>
                     <p className="text-gray-400 text-xs mt-0.5 truncate">
@@ -162,16 +169,16 @@ export default function RemindersPage() {
                     </p>
                     {hearing?.hearing_date && (
                       <p className="text-gray-400 text-xs">
-                        Peshi:{' '}
+                        {tr('Hearing', 'सुनवाई')}:{' '}
                         {new Date(hearing.hearing_date).toLocaleDateString(
-                          'en-IN',
+                          isHindi ? 'hi-IN' : 'en-IN',
                           { day: 'numeric', month: 'short', year: 'numeric' }
                         )}
                       </p>
                     )}
                     <p className="text-gray-300 text-xs">
-                      Bheja:{' '}
-                      {new Date(log.sent_at).toLocaleString('en-IN', {
+                      {tr('Sent', 'भेजा गया')}:{' '}
+                      {new Date(log.sent_at).toLocaleString(isHindi ? 'hi-IN' : 'en-IN', {
                         day: 'numeric',
                         month: 'short',
                         hour: '2-digit',
@@ -187,14 +194,14 @@ export default function RemindersPage() {
                     <>
                       <CheckCircle className="w-4 h-4 text-green-500" />
                       <span className="text-xs text-green-600 font-medium">
-                        Bheja
+                        {isManual ? tr('Confirmed sent', 'भेजने की पुष्टि') : tr('Sent', 'भेजा गया')}
                       </span>
                     </>
                   ) : (
                     <>
                       <XCircle className="w-4 h-4 text-red-400" />
                       <span className="text-xs text-red-500 font-medium">
-                        Failed
+                        {tr('Failed', 'विफल')}
                       </span>
                     </>
                   )}

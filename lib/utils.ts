@@ -46,11 +46,11 @@ export function urgencyColor(urgency: string): string {
 
 export function urgencyLabel(urgency: string): string {
   switch (urgency) {
-    case 'today': return '⚠️ Aaj'
-    case 'tomorrow': return '🔔 Kal'
-    case 'soon': return '📅 Jald'
-    case 'past': return '✓ Ho Gayi'
-    default: return '📋 Aane Wali'
+    case 'today': return '⚠️ Today'
+    case 'tomorrow': return '🔔 Tomorrow'
+    case 'soon': return '📅 Soon'
+    case 'past': return '✓ Completed'
+    default: return '📋 Upcoming'
   }
 }
 

@@ -32,7 +32,7 @@ export function buildAdvocateSMS(params: {
   courtName: string
   hearingDate: string
 }) {
-  return `VakilSaathi: Kal peshi - Case ${params.caseNumber}, ${params.clientName}, ${params.courtName}, ${params.hearingDate}. VakilSaathi App`
+  return `VakilSaathi: Hearing tomorrow - Case ${params.caseNumber}, ${params.clientName}, ${params.courtName}, ${params.hearingDate}.`
 }
 
 export function buildClientSMS(params: {
@@ -41,5 +41,5 @@ export function buildClientSMS(params: {
   courtName: string
   hearingDate: string
 }) {
-  return `VakilSaathi: Aapki court hearing kal hai. Case ${params.caseNumber}, Adv. ${params.advocateName}, ${params.courtName}, ${params.hearingDate}. Samay par aayein.`
+  return `VakilSaathi: Your court hearing is tomorrow. Case ${params.caseNumber}, Adv. ${params.advocateName}, ${params.courtName}, ${params.hearingDate}. Please arrive on time.`
 }

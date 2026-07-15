@@ -2,8 +2,9 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate, getHearingUrgency, urgencyColor, urgencyLabel } from '@/lib/utils'
-import { ArrowLeft, Calendar, User, Gavel, History, Clock3, CheckCircle2, FileCheck2, Phone } from 'lucide-react'
+import { ArrowLeft, Calendar, User, Gavel, History, Clock3, CheckCircle2, ExternalLink, FileCheck2, Phone, AlertTriangle, IndianRupee, ListTodo, Scale } from 'lucide-react'
 import { cookies } from 'next/headers'
+import GuestCaseDetails from '@/components/GuestCaseDetails'
 
 interface CaseDetailData {
   id: string
@@ -27,9 +28,27 @@ interface HearingDetailData {
 }
 
 interface StoredCaseMetadata {
+  consultation_date?: string
   case_start_date?: string
   party_mobile?: string
+  cnr_number?: string
+  court_number?: string
   documents?: string[]
+  matter_nature?: string
+  facts_summary?: string
+  relief_sought?: string
+  acts_sections?: string
+  urgency?: string
+  limitation_date?: string
+  filing_number?: string
+  filing_date?: string
+  opposite_advocate?: string
+  agreed_fee?: string
+  advance_received?: string
+  fee_notes?: string
+  next_action?: string
+  next_action_deadline?: string
+  internal_notes?: string
 }
 
 function parseCaseMetadata(notes?: string | null): StoredCaseMetadata {
@@ -38,15 +57,34 @@ function parseCaseMetadata(notes?: string | null): StoredCaseMetadata {
     const parsed = JSON.parse(notes) as StoredCaseMetadata
     return {
       case_start_date: parsed.case_start_date,
+      consultation_date: parsed.consultation_date,
       party_mobile: parsed.party_mobile,
+      cnr_number: parsed.cnr_number,
+      court_number: parsed.court_number,
       documents: Array.isArray(parsed.documents) ? parsed.documents : [],
+      matter_nature: parsed.matter_nature,
+      facts_summary: parsed.facts_summary,
+      relief_sought: parsed.relief_sought,
+      acts_sections: parsed.acts_sections,
+      urgency: parsed.urgency,
+      limitation_date: parsed.limitation_date,
+      filing_number: parsed.filing_number,
+      filing_date: parsed.filing_date,
+      opposite_advocate: parsed.opposite_advocate,
+      agreed_fee: parsed.agreed_fee,
+      advance_received: parsed.advance_received,
+      fee_notes: parsed.fee_notes,
+      next_action: parsed.next_action,
+      next_action_deadline: parsed.next_action_deadline,
+      internal_notes: parsed.internal_notes,
     }
   } catch {
     return {}
   }
 }
 
-function HearingRow({ hearing, isPast }: { hearing: HearingDetailData; isPast: boolean }) {
+function HearingRow({ hearing, isPast, isHindi }: { hearing: HearingDetailData; isPast: boolean; isHindi: boolean }) {
+  const tr = (english: string, hindi: string) => isHindi ? hindi : english
   const urgency = getHearingUrgency(hearing.hearing_date)
   const hearingDate = new Date(`${hearing.hearing_date}T00:00:00`)
 
@@ -59,22 +97,22 @@ function HearingRow({ hearing, isPast }: { hearing: HearingDetailData; isPast: b
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <p className="text-sm font-semibold text-gray-900">{hearing.hearing_purpose || 'Hearing'}</p>
+            <p className="text-sm font-semibold text-gray-900">{hearing.hearing_purpose || tr('Hearing', 'सुनवाई')}</p>
             <p className="mt-0.5 text-xs text-gray-500">{formatDate(hearing.hearing_date)}</p>
           </div>
           <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${urgencyColor(urgency)}`}>
-            {urgencyLabel(urgency)}
+            {isHindi ? ({ today: 'आज', tomorrow: 'कल', soon: 'जल्द', upcoming: 'आगामी', past: 'पूर्ण' } as Record<string, string>)[urgency] || urgencyLabel(urgency) : urgencyLabel(urgency)}
           </span>
         </div>
         {hearing.outcome && (
           <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-white p-2 text-xs text-gray-600 ring-1 ring-gray-100">
             <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-green-500" />
-            <span><strong className="text-gray-700">Outcome:</strong> {hearing.outcome}</span>
+            <span><strong className="text-gray-700">{tr('Outcome', 'परिणाम')}:</strong> {hearing.outcome}</span>
           </div>
         )}
         {hearing.next_date && (
           <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-orange-600">
-            <Clock3 className="h-3.5 w-3.5" /> Next date: {formatDate(hearing.next_date)}
+            <Clock3 className="h-3.5 w-3.5" /> {tr('Next date', 'अगली तारीख')}: {formatDate(hearing.next_date)}
           </p>
         )}
       </div>
@@ -89,8 +127,12 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const user = session?.user ?? null
   const cookieStore = await cookies()
   const isGuest = cookieStore.get('vakil_guest')?.value === '1'
-  const isHindi = cookieStore.get('vakil_language_v2')?.value === 'hi'
+  const isHindi = cookieStore.get('vakil_language_v3')?.value === 'hi'
+  const tr = (english: string, hindi: string) => isHindi ? hindi : english
 
+  if (!user && isGuest && id.startsWith('guest-case-')) {
+    return <GuestCaseDetails caseId={id} isHindi={isHindi} />
+  }
   if (!user && isGuest) redirect('/dashboard/cases')
 
   let caseData: CaseDetailData | null = null
@@ -118,7 +160,19 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   if (!caseData) notFound()
 
   const statusColors: Record<string, string> = {
+    'New Enquiry': 'bg-sky-100 text-sky-700 border-sky-200',
+    'Documents Pending': 'bg-amber-100 text-amber-700 border-amber-200',
+    Drafting: 'bg-purple-100 text-purple-700 border-purple-200',
+    'Legal Notice': 'bg-orange-100 text-orange-700 border-orange-200',
+    'Ready for Filing': 'bg-cyan-100 text-cyan-700 border-cyan-200',
+    Filed: 'bg-blue-100 text-blue-700 border-blue-200',
+    'Scrutiny / Objection': 'bg-red-100 text-red-700 border-red-200',
+    Registered: 'bg-indigo-100 text-indigo-700 border-indigo-200',
     Active: 'bg-green-100 text-green-700 border-green-200',
+    Evidence: 'bg-violet-100 text-violet-700 border-violet-200',
+    Arguments: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200',
+    'Judgment Reserved': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Appeal / Execution': 'bg-teal-100 text-teal-700 border-teal-200',
     Disposed: 'bg-gray-100 text-gray-600 border-gray-200',
     Stayed: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     Transferred: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -130,8 +184,13 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const hasStructuredMetadata = Boolean(
     caseMetadata.case_start_date ||
     caseMetadata.party_mobile ||
+    caseMetadata.cnr_number ||
+    caseMetadata.court_number ||
     caseMetadata.documents?.length
   )
+  const agreedFee = Number(caseMetadata.agreed_fee || 0)
+  const advanceReceived = Number(caseMetadata.advance_received || 0)
+  const feeDue = Math.max(agreedFee - advanceReceived, 0)
   const legacyNotes = hasStructuredMetadata ? null : caseData.notes
   const todayKey = new Date().toISOString().split('T')[0]
   const upcomingHearings = [...(hearings ?? [])]
@@ -148,7 +207,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         <Link href="/dashboard/cases" className="text-gray-400 hover:text-[#1e3a5f] transition">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-xl font-bold text-[#1e3a5f]">{isHindi ? 'मुकदमे का विवरण' : 'Case Details'}</h1>
+        <h1 className="text-xl font-bold text-[#1e3a5f]">{tr('Case Details', 'केस विवरण')}</h1>
       </div>
 
       {/* Case Info */}
@@ -165,12 +224,17 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
         <div className="grid grid-cols-2 gap-4 pt-2">
           {[
-            { label: isHindi ? 'अदालत' : 'Court', value: caseData.court_name, icon: '🏛️' },
-            { label: isHindi ? 'मुकदमे का प्रकार' : 'Case Type', value: caseData.case_type, icon: '📋' },
-            { label: isHindi ? 'न्यायाधीश' : 'Judge', value: caseData.judge_name || '—', icon: '⚖️' },
-            { label: isHindi ? 'विपक्षी पक्ष' : 'Opposite Party', value: caseData.opposite_party || '—', icon: '👤' },
-            { label: 'Case Start Date', value: caseMetadata.case_start_date ? formatDate(caseMetadata.case_start_date) : '—', icon: '📅' },
-            { label: 'Mobile Number', value: caseMetadata.party_mobile || '—', icon: '📱' },
+            { label: tr('Court', 'न्यायालय'), value: caseData.court_name, icon: '🏛️' },
+            { label: tr('Court / Room Number', 'न्यायालय / कक्ष संख्या'), value: caseMetadata.court_number || '—', icon: '🚪' },
+            { label: tr('Case Type', 'केस का प्रकार'), value: caseData.case_type, icon: '📋' },
+            { label: tr('Judge', 'न्यायाधीश'), value: caseData.judge_name || '—', icon: '⚖️' },
+            { label: tr('Opposite Party', 'विपक्षी पक्ष'), value: caseData.opposite_party || '—', icon: '👤' },
+            { label: tr('Consultation / Matter Start', 'परामर्श / मामला शुरू'), value: (caseMetadata.consultation_date || caseMetadata.case_start_date) ? formatDate(caseMetadata.consultation_date || caseMetadata.case_start_date || '') : '—', icon: '📅' },
+            { label: tr('Mobile Number', 'मोबाइल नंबर'), value: caseMetadata.party_mobile || '—', icon: '📱' },
+            { label: tr('Filing Number', 'फाइलिंग नंबर'), value: caseMetadata.filing_number || '—', icon: '🗂️' },
+            { label: tr('Filing Date', 'दाखिला तारीख'), value: caseMetadata.filing_date ? formatDate(caseMetadata.filing_date) : '—', icon: '📥' },
+            { label: tr('eCourts CNR Number', 'eCourts CNR नंबर'), value: caseMetadata.cnr_number || '—', icon: '🔎' },
+            { label: tr('Opposite Advocate', 'विपक्षी अधिवक्ता'), value: caseMetadata.opposite_advocate || '—', icon: '⚖️' },
           ].map(({ label, value, icon }) => (
             <div key={label} className="bg-gray-50 rounded-lg p-3">
               <p className="text-xs text-gray-400 mb-1">{icon} {label}</p>
@@ -181,23 +245,67 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
         {legacyNotes && (
           <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-100">
-            <p className="text-xs text-yellow-600 mb-1">📝 Notes</p>
+            <p className="text-xs text-yellow-600 mb-1">📝 {tr('Notes', 'टिप्पणियाँ')}</p>
             <p className="text-sm text-gray-700">{legacyNotes}</p>
           </div>
         )}
       </div>
+
+      {/* Matter intake overview */}
+      {(caseMetadata.matter_nature || caseMetadata.facts_summary || caseMetadata.relief_sought || caseMetadata.acts_sections || caseMetadata.limitation_date) && (
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <Scale className="h-4 w-4 text-blue-600" />
+            <h3 className="font-semibold text-[#1e3a5f]">{tr('Matter Intake', 'मामले की प्रारंभिक जानकारी')}</h3>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg bg-blue-50 p-3"><p className="text-xs text-blue-500">{tr('Nature of Matter', 'मामले की प्रकृति')}</p><p className="mt-1 text-sm font-semibold text-blue-950">{caseMetadata.matter_nature || caseData.case_type}</p></div>
+            <div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-400">{tr('Urgency', 'प्राथमिकता')}</p><p className="mt-1 text-sm font-semibold text-gray-800">{caseMetadata.urgency || tr('Normal', 'सामान्य')}</p></div>
+          </div>
+          {caseMetadata.facts_summary && <div className="mt-3 rounded-lg border border-gray-100 p-3"><p className="text-xs font-medium text-gray-400">{tr('Facts / Client Problem', 'तथ्य / मुवक्किल की समस्या')}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{caseMetadata.facts_summary}</p></div>}
+          {caseMetadata.relief_sought && <div className="mt-3 rounded-lg border border-green-100 bg-green-50 p-3"><p className="text-xs font-medium text-green-600">{tr('Relief / Client Objective', 'मांगी गई राहत / मुवक्किल का उद्देश्य')}</p><p className="mt-1 whitespace-pre-wrap text-sm text-green-900">{caseMetadata.relief_sought}</p></div>}
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {caseMetadata.acts_sections && <div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-400">{tr('Acts / Sections', 'अधिनियम / धाराएँ')}</p><p className="mt-1 text-sm font-medium text-gray-800">{caseMetadata.acts_sections}</p></div>}
+            {caseMetadata.limitation_date && <div className="rounded-lg border border-orange-100 bg-orange-50 p-3"><p className="flex items-center gap-1 text-xs text-orange-600"><AlertTriangle className="h-3.5 w-3.5" /> {tr('Limitation / Critical Deadline', 'लिमिटेशन / महत्वपूर्ण समय-सीमा')}</p><p className="mt-1 text-sm font-semibold text-orange-900">{formatDate(caseMetadata.limitation_date)}</p></div>}
+          </div>
+        </div>
+      )}
+
+      {(agreedFee > 0 || advanceReceived > 0 || caseMetadata.next_action || caseMetadata.internal_notes) && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(agreedFee > 0 || advanceReceived > 0) && (
+            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center gap-2"><IndianRupee className="h-4 w-4 text-green-600" /><h3 className="font-semibold text-[#1e3a5f]">{tr('Fee Snapshot', 'फीस सारांश')}</h3></div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-gray-500">{tr('Agreed', 'तय फीस')}</span><strong>₹{agreedFee.toLocaleString('en-IN')}</strong></div>
+                <div className="flex justify-between"><span className="text-gray-500">{tr('Received', 'प्राप्त')}</span><strong className="text-green-700">₹{advanceReceived.toLocaleString('en-IN')}</strong></div>
+                <div className="flex justify-between border-t border-gray-100 pt-2"><span className="text-gray-600">{tr('Due', 'बकाया')}</span><strong className="text-orange-600">₹{feeDue.toLocaleString('en-IN')}</strong></div>
+              </div>
+              {caseMetadata.fee_notes && <p className="mt-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-600">{caseMetadata.fee_notes}</p>}
+            </div>
+          )}
+          {(caseMetadata.next_action || caseMetadata.internal_notes) && (
+            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center gap-2"><ListTodo className="h-4 w-4 text-purple-600" /><h3 className="font-semibold text-[#1e3a5f]">{tr('Next Action', 'अगला कार्य')}</h3></div>
+              {caseMetadata.next_action && <p className="text-sm font-medium text-gray-800">{caseMetadata.next_action}</p>}
+              {caseMetadata.next_action_deadline && <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700"><Clock3 className="h-3.5 w-3.5" /> {formatDate(caseMetadata.next_action_deadline)}</p>}
+              {caseMetadata.internal_notes && <div className="mt-3 rounded-lg border border-yellow-100 bg-yellow-50 p-3"><p className="text-[10px] font-semibold uppercase tracking-wide text-yellow-700">{tr('Private advocate note', 'अधिवक्ता की निजी टिप्पणी')}</p><p className="mt-1 whitespace-pre-wrap text-xs leading-5 text-gray-700">{caseMetadata.internal_notes}</p></div>}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Documents received from party */}
       <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <FileCheck2 className="h-4 w-4 text-blue-600" />
-            <h3 className="font-semibold text-[#1e3a5f]">Documents Received</h3>
+            <h3 className="font-semibold text-[#1e3a5f]">{tr('Documents Received', 'प्राप्त दस्तावेज़')}</h3>
           </div>
-          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">{caseMetadata.documents?.length ?? 0} received</span>
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">{caseMetadata.documents?.length ?? 0} {tr('received', 'प्राप्त')}</span>
         </div>
         {!caseMetadata.documents?.length ? (
-          <p className="text-sm text-gray-400">No documents marked as received yet.</p>
+          <p className="text-sm text-gray-400">{tr('No documents marked as received yet.', 'अभी तक कोई दस्तावेज़ प्राप्त चिह्नित नहीं किया गया है।')}</p>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2">
             {caseMetadata.documents.map(document => (
@@ -209,7 +317,12 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         )}
         {caseMetadata.party_mobile && (
           <a href={`tel:${caseMetadata.party_mobile}`} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50">
-            <Phone className="h-4 w-4" /> Call party
+            <Phone className="h-4 w-4" /> {tr('Call party', 'पक्षकार को कॉल करें')}
+          </a>
+        )}
+        {caseMetadata.cnr_number && (
+          <a href="https://services.ecourts.gov.in/ecourtindia_v6/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-lg border border-orange-200 px-3 py-2 text-sm font-medium text-orange-700 hover:bg-orange-50">
+            <ExternalLink className="h-4 w-4" /> {tr('Verify CNR on official eCourts', 'आधिकारिक eCourts पर CNR सत्यापित करें')}
           </a>
         )}
       </div>
@@ -219,7 +332,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-3">
             <User className="w-4 h-4 text-orange-500" />
-            <h3 className="font-semibold text-[#1e3a5f]">{isHindi ? 'मुवक्किल' : 'Client'}</h3>
+            <h3 className="font-semibold text-[#1e3a5f]">{tr('Client', 'मुवक्किल')}</h3>
           </div>
           <div className="flex items-center justify-between">
             <div>
@@ -239,19 +352,19 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-orange-500" />
-            <h3 className="font-semibold text-[#1e3a5f]">{isHindi ? 'पेशियाँ' : 'Hearings'} ({hearings?.length ?? 0})</h3>
+            <h3 className="font-semibold text-[#1e3a5f]">{tr('Hearings', 'सुनवाई')} ({hearings?.length ?? 0})</h3>
           </div>
-          <Link href="/dashboard/hearings" className="text-orange-500 text-sm hover:underline">+ Nai Peshi</Link>
+          <Link href="/dashboard/hearings" className="text-orange-500 text-sm hover:underline">+ {tr('New Hearing', 'नई सुनवाई')}</Link>
         </div>
 
         {(hearings?.length ?? 0) > 0 && (
           <div className="border-b border-gray-100 px-5 py-3">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-800">
-              <History className="h-4 w-4 text-orange-500" /> Complete Hearing History
+              <History className="h-4 w-4 text-orange-500" /> {tr('Complete Hearing History', 'सुनवाई का पूरा इतिहास')}
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">{upcomingHearings.length} Upcoming</span>
-              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">{pastHearings.length} Past</span>
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">{upcomingHearings.length} {tr('Upcoming', 'आगामी')}</span>
+              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">{pastHearings.length} {tr('Past', 'पिछली')}</span>
             </div>
           </div>
         )}
@@ -259,7 +372,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         {!hearings || hearings.length === 0 ? (
           <div className="text-center py-8 text-gray-400 text-sm">
             <Gavel className="w-8 h-8 mx-auto mb-2 opacity-40" />
-            <p>Koi peshi nahi daali gayi</p>
+            <p>{tr('No hearings have been added', 'कोई सुनवाई नहीं जोड़ी गई है')}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
@@ -268,6 +381,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
                 key={hearing.id}
                 hearing={hearing}
                 isPast={hearing.hearing_date < todayKey}
+                isHindi={isHindi}
               />
             ))}
           </div>

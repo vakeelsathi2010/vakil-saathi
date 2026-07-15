@@ -19,7 +19,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Server component mein set nahi ho sakta — ignore
+            // Cookie writes are unavailable in this server component.
           }
         },
       },

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { ensureAdvocateProfile } from '@/lib/supabase/ensure-advocate'
 import Sidebar from '@/components/Sidebar'
+import AdvocateProfileSetup from '@/components/AdvocateProfileSetup'
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +22,21 @@ export default async function DashboardLayout({
   const advocate = user
     ? (await ensureAdvocateProfile(supabase, user)).advocate
     : null
+  const metadata = user?.user_metadata ?? {}
+  const savedPhone = String(metadata.whatsapp_number || metadata.phone || advocate?.phone || '')
+  const hasValidPhone = /^[6-9]\d{9}$/.test(savedPhone.replace(/\D/g, '').slice(-10))
+  const phoneStatus = String(metadata.phone_verification_status || '')
+  const hasAcceptedPhoneStatus = phoneStatus === 'user_confirmed_unverified' || phoneStatus === 'otp_verified'
+  const profileSetupComplete = metadata.profile_setup_completed === true && metadata.whatsapp_opt_in === true && hasValidPhone && hasAcceptedPhoneStatus
+
+  if (user && advocate && !profileSetupComplete) {
+    return (
+      <AdvocateProfileSetup
+        advocateId={advocate.id}
+        initialName={advocate.full_name}
+      />
+    )
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">

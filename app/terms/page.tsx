@@ -1,168 +1,50 @@
+'use client'
+
 import Link from 'next/link'
 import { Scale } from 'lucide-react'
+import LanguageToggle from '@/components/LanguageToggle'
+import { useLanguage } from '@/components/LanguageProvider'
 
 export default function TermsPage() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-[#1e3a5f] px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 w-fit">
-          <Scale className="text-orange-400 w-7 h-7" />
-          <span className="text-white text-xl font-bold">VakilSaathi</span>
-        </Link>
-      </header>
+  const { isHindi, tr } = useLanguage()
+  const sections = isHindi ? [
+    ['1. परिचय', 'VakilSaathi अधिवक्ताओं के लिए एक निःशुल्क प्रैक्टिस-प्रबंधन और रिमाइंडर सेवा है। यह किसी विधि फर्म का भाग नहीं है और कानूनी सेवा या सलाह प्रदान नहीं करता। ऐप का उपयोग इस समझौते की स्वीकृति माना जाएगा।'],
+    ['2. निःशुल्क सेवा — कोई सदस्यता नहीं', 'VakilSaathi अभी बिना पंजीकरण शुल्क, सदस्यता शुल्क या छिपे शुल्क के उपलब्ध है। सुविधाएँ बदली जा सकती हैं। प्रत्येक न्यायालय तारीख और केस विवरण की स्वतंत्र जाँच करना उपयोगकर्ता की जिम्मेदारी है।'],
+    ['3. दायित्व की सीमा', 'लागू कानून की सीमा तक, प्लेटफ़ॉर्म छूटी सुनवाई, गलत तारीख, देर से या न पहुँचे संदेश, तकनीकी विफलता, सर्वर बंद रहने, डेटा हानि, मुवक्किल की अनुपस्थिति या अप्रत्यक्ष हानि के लिए जिम्मेदार नहीं है। VakilSaathi केवल संगठन में सहायता करता है; यह आधिकारिक न्यायालय रिकॉर्ड नहीं है।'],
+    ['4. उपयोगकर्ता की जिम्मेदारी', 'आप दर्ज की गई जानकारी की शुद्धता, मुवक्किल की जानकारी के वैध उपयोग, आवश्यक सहमति प्राप्त करने और सभी पेशेवर व कानूनी दायित्वों का पालन करने के लिए जिम्मेदार हैं।'],
+    ['5. विवाद समाधान', 'किसी विवाद को पहले नीचे दिए संपर्क माध्यम से प्लेटफ़ॉर्म के सामने रखें ताकि अनौपचारिक समाधान का प्रयास किया जा सके। आगे की कार्यवाही भारतीय कानून के अनुसार होगी।'],
+    ['6. लागू कानून और क्षेत्राधिकार', 'यह समझौता भारत के लागू कानूनों द्वारा शासित है। लागू कानून के अधीन, कानपुर, उत्तर प्रदेश के सक्षम न्यायालयों को संबंधित विवादों पर अधिकार होगा।'],
+    ['7. खाता निलंबन या समाप्ति', 'शर्तों का उल्लंघन, मुवक्किल डेटा का दुरुपयोग, सेवा को नुकसान पहुँचाने का प्रयास या गैरकानूनी/अपमानजनक व्यवहार होने पर खाता निलंबित या समाप्त किया जा सकता है।'],
+    ['8. डेटा और गोपनीयता', 'ऐप चलाने के लिए हम नाम, फोन, ईमेल, BCI नंबर, न्यायालय पसंद, केस विवरण, सुनवाई तारीख, टिप्पणियाँ, चुने गए दस्तावेज़ तथा मुवक्किल का नाम, फोन और सहमति स्थिति रखते हैं। खाता बनाने के लिए बैंक विवरण, बायोमेट्रिक या सरकारी पहचान संख्या आवश्यक नहीं है। व्यक्तिगत डेटा बेचा नहीं जाता। पहुँच, सुधार या हटाने के लिए vakil.saathi.app@gmail.com पर संपर्क करें।'],
+    ['9. मुवक्किल डेटा और सहमति', 'मुवक्किल का नंबर जोड़ते समय आप पुष्टि करते हैं कि WhatsApp या SMS सुनवाई रिमाइंडर की अनुमति मिली है। संदेश रोकने के अनुरोध का सम्मान करना और जानकारी का उपयोग केवल वैध केस-प्रबंधन के लिए करना आवश्यक है। सही सहमति दर्ज करना अधिवक्ता की जिम्मेदारी है।'],
+    ['10. BCI अनुपालन', 'VakilSaathi प्रैक्टिस-प्रबंधन उपकरण है। यह मुवक्किल और अधिवक्ता का मिलान नहीं करता तथा कानूनी सेवाओं के विज्ञापन के लिए नहीं है। BCI नियमों और अन्य पेशेवर दायित्वों का पालन प्रत्येक अधिवक्ता की जिम्मेदारी है।'],
+    ['11. संपूर्ण समझौता', 'ये शर्तें सेवा के उपयोग के संबंध में आपके और प्लेटफ़ॉर्म के बीच संपूर्ण समझौता हैं। सेवा या कानूनी आवश्यकताओं में बदलाव होने पर इन्हें अद्यतन किया जा सकता है और प्रभावी तारीख बदली जाएगी।'],
+    ['12. संपर्क', 'डेटा हटाने या गोपनीयता संबंधी अनुरोध के लिए ईमेल करें: vakil.saathi.app@gmail.com\n\nलक्षित उत्तर समय: 30 कार्य दिवसों के भीतर।'],
+  ] : [
+    ['1. Introduction', 'VakilSaathi is a free practice-management and reminder service for advocates. It is not a law firm and does not provide legal services or advice. Using the App constitutes acceptance of this Agreement.'],
+    ['2. Free Service — No Subscription', 'VakilSaathi is currently provided without a registration fee, subscription fee, or hidden charge. Features may change. Users remain responsible for independently verifying every court date and case detail.'],
+    ['3. Limitation of Liability', 'To the extent permitted by law, the Platform is not responsible for missed hearings, incorrect dates, delayed or undelivered messages, technical failures, downtime, data loss, client attendance, or indirect loss. VakilSaathi is an organisational aid and is not the official court record.'],
+    ['4. User Responsibility', 'You are responsible for the accuracy of entered information, lawful use of client information, obtaining all required consent, and complying with professional and legal obligations.'],
+    ['5. Dispute Resolution', 'Raise any dispute with the Platform through the contact details below so an informal resolution can first be attempted. Further proceedings will be governed by applicable Indian law.'],
+    ['6. Governing Law and Jurisdiction', 'This Agreement is governed by applicable Indian law. Subject to law, competent courts in Kanpur, Uttar Pradesh will have jurisdiction over related disputes.'],
+    ['7. Account Suspension or Termination', 'Accounts may be suspended or terminated for violating these Terms, misusing client data, attempting to damage the Service, or engaging in unlawful or abusive conduct.'],
+    ['8. Data and Privacy', 'To operate the App we retain name, phone, email, BCI number, court preferences, case details, case dates, notes, selected documents, and client name, phone and consent status. Bank details, biometrics, and government identity numbers are not required for account creation. Individual data is not sold. Request access, correction, or deletion at vakil.saathi.app@gmail.com.'],
+    ['9. Client Data and Consent', 'When adding a client number, you confirm authorisation for WhatsApp or SMS hearing reminders. You must respect requests to stop messages and use client information only for legitimate case management. The advocate is responsible for recording valid consent.'],
+    ['10. BCI Compliance', 'VakilSaathi is a practice-management tool. It does not match clients with advocates and is not intended to advertise legal services. Each advocate remains responsible for BCI rules and other professional obligations.'],
+    ['11. Entire Agreement', 'These Terms are the complete agreement concerning use of the Service. They may be updated when the Service or legal requirements change, and the effective date will be updated.'],
+    ['12. Contact', 'For data-deletion requests or privacy concerns, email vakil.saathi.app@gmail.com.\n\nTarget response time: within 30 business days.'],
+  ]
 
-      <main className="max-w-3xl mx-auto px-4 py-10 space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-[#1e3a5f] mb-2">Terms of Service & Privacy Policy</h1>
-          <p className="text-gray-500 text-sm">Effective Date: 7 July 2026 | Governing Law: Uttar Pradesh, India</p>
-        </div>
-
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-5">
-          <p className="text-orange-800 font-semibold text-sm">⚠️ Zaruri Soochna:</p>
-          <p className="text-orange-700 text-sm mt-1">
-            VakilSaathi app mein login ya register karne ka matlab hai ki aap in Terms of Service aur Privacy Policy se
-            poori tarah sahmat hain. Ye ek legally binding agreement hai. Agar aap sahmat nahi hain toh app ka use band karein.
-          </p>
-        </div>
-
-        {[
-          {
-            title: '1. Parichay (Introduction)',
-            content: `VakilSaathi ("Platform", "App", "Service") ek practice management aur reminder service hai jo advocates ke
-liye muft (gratuitously) provide ki jaati hai. Platform ka malik aur operator ek individual developer hai.
-Platform koi law firm nahi hai aur koi legal services provide nahi karta.
-
-App ka use karna is samjhaute (Agreement) ki unconditional acceptance maani jaayegi — chahe aap
-is page ko padhe ya na padhe. Ye acceptance app mein login hote hi ho jaati hai aur server logs mein
-record hoti hai.`,
-          },
-          {
-            title: '2. Muft Seva (Free Service) — Koi Subscription Nahi',
-            content: `VakilSaathi advocates ko bilkul muft di jaati hai. Koi registration fee, subscription fee, ya hidden charge nahi hai.
-Platform kabhi bhi, bina kisi notice ke, features add ya remove kar sakta hai.
-
-Kyunki yeh service gratuitously di ja rahi hai, Indian Contract Act 1872 ke Section 25 aur baad ke
-sections ke tahat, platform kisi bhi financial loss, missed hearing, ya anyaay ke liye kisi bhi roop mein
-zimmedaar nahi hoga.`,
-          },
-          {
-            title: '3. Seema Sunishchit (Limitation of Liability)',
-            content: `Platform ki maximum liability, kisi bhi case mein, aur kisi bhi wajah se — ₹0 (SHUNYA) hai.
-
-Platform zimmedaar nahi hoga:
-• Kisi bhi missed hearing, peshi, ya court date ke liye
-• WhatsApp ya SMS reminder na pahunchne par
-• Technical failure, server downtime, ya data loss ke liye
-• Client ke na aane ya kisi bhi third party ke actions ke liye
-• Kisi bhi indirect, consequential, ya incidental damage ke liye
-
-Ye limitation tab bhi apply hoti hai jab platform ko possible damage ke baare mein bataya gaya ho.`,
-          },
-          {
-            title: '4. Kshatipoorthi (Indemnification)',
-            content: `Aap (user) platform, uske developers, aur affiliates ko kisi bhi claim, action, loss, damage, ya expense se
-kshatipoorthi karenge jo:
-• Aapke app use se arise ho
-• Aapke data ya information se arise ho
-• Aapke clients ya third parties ke saath aapke behavior se arise ho
-• Kisi bhi law ya regulation ke aapke violation se arise ho`,
-          },
-          {
-            title: '5. Vivad Samadhan — Sirf Arbitration (Dispute Resolution)',
-            content: `Koi bhi vivad (dispute) SIRF Kanpur, Uttar Pradesh mein registered arbitrator ke paas jaayega.
-Court mein case dakhil karna allowed NAHI hai.
-
-Arbitration rules: Arbitration and Conciliation Act, 1996 ke tahat.
-Bhasha: Hindi ya English.
-Kharcha: Claim karne wala party arbitration ki fees khud bharega.
-
-Class action ya group action POORI TARAH VARJIT hai.
-Koi bhi vivad sirf individual basis par hoga.`,
-          },
-          {
-            title: '6. Governing Law & Jurisdiction',
-            content: `Ye Agreement Uttar Pradesh, India ke laws ke tahat govern hogi.
-Jurisdiction: Kanpur, Uttar Pradesh ke courts.
-
-Note: Arbitration clause ke karan, court mein case dakhil karna tab hi hoga jab arbitration award ka
-enforcement ho.`,
-          },
-          {
-            title: '7. Account Terminate Karne Ka Adhikar',
-            content: `Platform kisi bhi account ko, kisi bhi samay, bina kisi karan bataye, bina kisi notice ke, turant terminate
-kar sakta hai.
-
-Termination ke reasons mein (limited nahi) shamil hain:
-• Platform ke terms ka ullanghan
-• Abusive, threatening, ya inappropriate behavior
-• Platform ke against legal action ki dhamki
-• Platform ko nuksaan pahunchane ki koshish`,
-          },
-          {
-            title: '8. Data Aur Privacy',
-            content: `Hum sirf wahi data lete hain jo app chalane ke liye zaruri hai:
-
-Aapka Data: Naam, phone, email, BCI number, court preference — app function ke liye.
-Case Data: Case number, court naam, judge naam, hearing dates — public record hain (eCourts par bhi available).
-Client Data: Naam aur phone number — reminder bhejne ke liye.
-
-Hum NAHI lete: Aadhaar number, bank details, health information, biometric data.
-
-Data Use: Aapka individual data kisi ko sell nahi kiya jaata.
-Aggregated/anonymized data (jaise: "Kanpur mein X hearings scheduled") commercial purposes ke liye use ho sakta hai — jisme election campaign broadcasts shamil hain jahan individual identity reveal nahi hoti.
-
-DPDPA 2023 compliance ke tahat, aap apna data delete karne ka request kar sakte hain:
-vakil.saathi.app@gmail.com par email karein.`,
-          },
-          {
-            title: '9. Client Data Aur Consent',
-            content: `Jab aap kisi client ka number app mein daalte hain:
-• Aap guarantee karte hain ki aapne client se WhatsApp/SMS reminder ki permission li hai
-• Client ko ek consent message bheja jaata hai ("STOP" se unsubscribe kar sakte hain)
-• Client ki "STOP" request hone par turant reminder band karna aapki jimmedaari hai
-
-Platform client data ke misuse ke liye jimmedaar nahi hai.`,
-          },
-          {
-            title: '10. BCI Compliance',
-            content: `VakilSaathi ek practice management tool hai — yeh BCI Rule 36 ka ullanghan nahi karta kyunki:
-• Yeh clients ko advocates se connect nahi karta
-• Yeh advocate ki advertising nahi karta
-• Yeh sirf advocate ke existing clients ko reminder bhejta hai
-
-Advocates ki zimmedaari hai ki woh BCI rules ka palan karein. Platform BCI compliance ke liye zimmedaar nahi hai.`,
-          },
-          {
-            title: '11. Sampoorna Samjhauta (Entire Agreement)',
-            content: `Ye Terms of Service platform aur aapke beech ka sampoorna samjhauta hai.
-Koi bhi maukhik (verbal) baat, promise, ya samjhauta is written agreement ko override nahi karta.
-Koi bhi platform representative ka verbal statement legally binding nahi hai.
-
-Platform in terms ko kabhi bhi update kar sakta hai. Continued use = acceptance of updated terms.`,
-          },
-          {
-            title: '12. Sampark (Contact)',
-            content: `Data deletion ya privacy concerns ke liye:
-Email: vakil.saathi.app@gmail.com
-
-Response time: 30 business days tak.`,
-          },
-        ].map(({ title, content }) => (
-          <section key={title} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-3">{title}</h2>
-            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{content}</p>
-          </section>
-        ))}
-
-        <div className="bg-[#1e3a5f] rounded-xl p-6 text-center">
-          <p className="text-white font-semibold mb-1">App use karke aap in Terms se sahmat hain</p>
-          <p className="text-blue-200 text-sm">VakilSaathi — Advocates ke liye, advocate ne banaya</p>
-          <Link href="/" className="inline-block mt-4 bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition text-sm font-medium">
-            Home Par Jaayein
-          </Link>
-        </div>
-      </main>
-    </div>
-  )
+  return <div className="min-h-screen bg-gray-50">
+    <header className="flex items-center justify-between bg-[#1e3a5f] px-6 py-4">
+      <Link href="/" className="flex items-center gap-2"><Scale className="h-7 w-7 text-orange-400" /><span className="text-xl font-bold text-white">VakilSaathi</span></Link>
+      <LanguageToggle compact />
+    </header>
+    <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
+      <div><h1 className="mb-2 text-3xl font-bold text-[#1e3a5f]">{tr('Terms of Service & Privacy Policy', 'सेवा की शर्तें और गोपनीयता नीति')}</h1><p className="text-sm text-gray-500">{tr('Effective Date: 7 July 2026 | Governing Law: Uttar Pradesh, India', 'प्रभावी तारीख: 7 जुलाई 2026 | लागू कानून: उत्तर प्रदेश, भारत')}</p></div>
+      <div className="rounded-xl border border-orange-200 bg-orange-50 p-5"><p className="text-sm font-semibold text-orange-800">⚠️ {tr('Important Notice', 'महत्वपूर्ण सूचना')}:</p><p className="mt-1 text-sm text-orange-700">{tr('By registering or logging in, you agree to these Terms and the Privacy Policy. If you disagree, stop using the App.', 'पंजीकरण या लॉग इन करके आप इन शर्तों और गोपनीयता नीति से सहमत होते हैं। असहमत होने पर ऐप का उपयोग बंद करें।')}</p></div>
+      {sections.map(([title, content]) => <section key={title} className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"><h2 className="mb-3 text-lg font-bold text-[#1e3a5f]">{title}</h2><p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">{content}</p></section>)}
+      <div className="rounded-xl bg-[#1e3a5f] p-6 text-center"><p className="mb-1 font-semibold text-white">{tr('By using the App, you agree to these Terms', 'ऐप का उपयोग करके आप इन शर्तों से सहमत होते हैं')}</p><p className="text-sm text-blue-200">{tr('VakilSaathi — Built for advocates', 'VakilSaathi — अधिवक्ताओं के लिए निर्मित')}</p><Link href="/" className="mt-4 inline-block rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white hover:bg-orange-600">{tr('Return Home', 'मुख्य पृष्ठ पर लौटें')}</Link></div>
+    </main>
+  </div>
 }

@@ -3,6 +3,7 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 type AdvocateProfile = {
   id: string
   full_name: string
+  phone: string
 }
 
 export async function ensureAdvocateProfile(
@@ -11,7 +12,7 @@ export async function ensureAdvocateProfile(
 ): Promise<{ advocate: AdvocateProfile | null; error: string | null }> {
   const { data: existing, error: lookupError } = await supabase
     .from('advocates')
-    .select('id, full_name')
+    .select('id, full_name, phone')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -39,7 +40,7 @@ export async function ensureAdvocateProfile(
       },
       { onConflict: 'user_id' }
     )
-    .select('id, full_name')
+    .select('id, full_name, phone')
     .single()
 
   if (createError) return { advocate: null, error: createError.message }

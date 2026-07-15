@@ -11,7 +11,6 @@ import {
   Landmark,
   LockKeyhole,
   Mail,
-  Phone,
   Scale,
   User,
 } from 'lucide-react'
@@ -44,13 +43,12 @@ const fieldClass =
   'h-14 w-full rounded-xl border border-[#e4dfed] bg-white pl-12 pr-4 text-[#211a30] shadow-[0_7px_18px_rgba(63,41,104,0.10)] transition placeholder:text-[#aaa3b7] focus:border-[#7c4df1] focus:ring-4 focus:ring-[#7c4df1]/10'
 
 export default function RegisterPage() {
-  const { isHindi } = useLanguage()
+  const { tr } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [phone, setPhone] = useState('')
   const [bciNumber, setBciNumber] = useState('')
   const [barAssociation, setBarAssociation] = useState('Kanpur Bar Association')
   const [court, setCourt] = useState('District Court, Kanpur Nagar')
@@ -60,15 +58,11 @@ export default function RegisterPage() {
     e.preventDefault()
 
     if (password.length < 8) {
-      toast.error('Password kam se kam 8 characters ka hona chahiye')
-      return
-    }
-    if (!/^[6-9]\d{9}$/.test(phone)) {
-      toast.error('Sahi mobile number daalo (10 digits)')
+      toast.error(tr('Password must contain at least 8 characters', 'पासवर्ड कम से कम 8 अक्षरों का होना चाहिए'))
       return
     }
     if (!termsAccepted) {
-      toast.error('Terms & Privacy Policy accept karni padegi')
+      toast.error(tr('Please accept the Terms and Privacy Policy', 'कृपया सेवा की शर्तें और गोपनीयता नीति स्वीकार करें'))
       return
     }
 
@@ -80,7 +74,6 @@ export default function RegisterPage() {
       options: {
         data: {
           full_name: fullName,
-          phone,
           bci_number: bciNumber || null,
           bar_association: barAssociation,
           primary_court: court,
@@ -97,13 +90,13 @@ export default function RegisterPage() {
 
     if (!authData.session) {
       await fetch('/api/guest-session', { method: 'DELETE' })
-      toast.success('Account ban gaya. Email verify karke login karein.')
+      toast.success(tr('Account created. Verify your email, then log in.', 'खाता बन गया। ईमेल सत्यापित करके लॉगिन करें।'))
       window.location.assign('/login?registered=1')
       return
     }
 
     if (!authData.user) {
-      toast.error('Account session nahi bani. Dobara login karein.')
+      toast.error(tr('An account session could not be created. Please log in again.', 'खाता सत्र नहीं बन सका। कृपया दोबारा लॉगिन करें।'))
       setLoading(false)
       return
     }
@@ -118,13 +111,13 @@ export default function RegisterPage() {
     }
 
     await fetch('/api/guest-session', { method: 'DELETE' })
-    toast.success('Registration ho gayi! 🎉')
+    toast.success(tr('Registration completed! 🎉', 'पंजीकरण पूरा हुआ! 🎉'))
     window.location.assign('/dashboard')
   }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#17104b] px-4 py-8 sm:px-6 sm:py-12">
-      <div className="absolute right-4 top-4 z-20 text-white sm:right-6 sm:top-6"><LanguageToggle /></div>
+      <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6"><LanguageToggle /></div>
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute -left-24 -top-20 h-80 w-80 rounded-full bg-[#1498ff] opacity-90 blur-[90px]" />
         <div className="absolute right-[-7rem] top-[8%] h-96 w-96 rounded-full bg-[#ed43d2] opacity-80 blur-[100px]" />
@@ -139,7 +132,7 @@ export default function RegisterPage() {
             <Scale className="h-9 w-9" strokeWidth={2.2} />
             <span className="text-3xl font-bold tracking-tight">VakilSaathi</span>
           </div>
-          <p className="text-sm font-medium text-white/75">{isHindi ? 'अधिवक्ता का डिजिटल साथी — बिल्कुल मुफ़्त' : 'Your digital legal practice companion — free forever'}</p>
+          <p className="text-sm font-medium text-white/75">{tr('Your digital legal practice companion — free forever', 'आपका डिजिटल कानूनी सहयोगी — हमेशा मुफ़्त')}</p>
         </div>
 
         <div className="w-full rounded-[2rem] border border-white/70 bg-white/95 px-6 py-8 shadow-[0_30px_80px_rgba(19,9,74,0.38)] backdrop-blur-xl sm:px-10 sm:py-10">
@@ -149,47 +142,41 @@ export default function RegisterPage() {
                 <User className="h-9 w-9 text-white" strokeWidth={2.2} />
               </div>
             </div>
-            <h1 className="text-[2rem] font-bold tracking-tight text-[#21153f]">{isHindi ? 'मुफ़्त अकाउंट बनाएँ' : 'Create your free account'}</h1>
-            <p className="mt-1.5 text-sm text-[#817991]">{isHindi ? 'सारी जानकारी एक ही बार में भरें' : 'Enter all your details in one simple form'}</p>
+            <h1 className="text-[2rem] font-bold tracking-tight text-[#21153f]">{tr('Create your free account', 'अपना मुफ़्त खाता बनाएँ')}</h1>
+            <p className="mt-1.5 text-sm text-[#817991]">{tr('Enter all your details in one simple form', 'एक सरल फॉर्म में अपनी पूरी जानकारी भरें')}</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-5">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label={isHindi ? 'पूरा नाम' : 'Full Name'} icon={<User />}>
-                <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={isHindi ? 'अधि. रेयान आरिफ़' : 'Adv. Reyan Arif'} autoComplete="name" required className={fieldClass} />
-              </Field>
-
-              <Field label={isHindi ? 'मोबाइल नंबर' : 'Mobile Number'} icon={<Phone />}>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="9876543210" autoComplete="tel" inputMode="numeric" required className={fieldClass} />
-              </Field>
-            </div>
+            <Field label={tr('Full Name', 'पूरा नाम')} icon={<User />}>
+              <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={tr('Adv. Reyan Arif', 'अधि. रेयान आरिफ़')} autoComplete="name" required className={fieldClass} />
+            </Field>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label={isHindi ? 'ईमेल' : 'Email'} icon={<Mail />}>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={isHindi ? 'अपना ईमेल दर्ज करें' : 'Enter your email'} autoComplete="email" required className={fieldClass} />
+              <Field label={tr('Email', 'ईमेल')} icon={<Mail />}>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr('Enter your email', 'अपना ईमेल दर्ज करें')} autoComplete="email" required className={fieldClass} />
               </Field>
 
-              <Field label={isHindi ? 'पासवर्ड' : 'Password'} icon={<LockKeyhole />}>
-                <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={isHindi ? 'कम से कम 8 अक्षर' : 'Minimum 8 characters'} autoComplete="new-password" minLength={8} required className={`${fieldClass} pr-12`} />
-                <button type="button" onClick={() => setShowPass((current) => !current)} aria-label={showPass ? 'Password chhupayein' : 'Password dikhayein'} className="absolute right-4 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#8b82a0] transition hover:bg-[#f3effb] hover:text-[#5f3dba]">
+              <Field label={tr('Password', 'पासवर्ड')} icon={<LockKeyhole />}>
+                <input type={showPass ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={tr('Minimum 8 characters', 'कम से कम 8 अक्षर')} autoComplete="new-password" minLength={8} required className={`${fieldClass} pr-12`} />
+                <button type="button" onClick={() => setShowPass((current) => !current)} aria-label={showPass ? tr('Hide password', 'पासवर्ड छिपाएँ') : tr('Show password', 'पासवर्ड दिखाएँ')} className="absolute right-4 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#8b82a0] transition hover:bg-[#f3effb] hover:text-[#5f3dba]">
                   {showPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </Field>
             </div>
 
-            <Field label={isHindi ? 'BCI नामांकन संख्या (वैकल्पिक)' : 'BCI Enrollment Number (Optional)'} icon={<BadgeCheck />}>
+            <Field label={tr('BCI Enrollment Number (Optional)', 'BCI नामांकन संख्या (वैकल्पिक)')} icon={<BadgeCheck />}>
               <input value={bciNumber} onChange={(e) => setBciNumber(e.target.value)} placeholder="UP/123/2026" className={fieldClass} />
             </Field>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label={isHindi ? 'बार एसोसिएशन' : 'Bar Association'} icon={<Building2 />}>
+              <Field label={tr('Bar Association', 'बार एसोसिएशन')} icon={<Building2 />}>
                 <select value={barAssociation} onChange={(e) => setBarAssociation(e.target.value)} className={`${fieldClass} appearance-none pr-11`}>
                   {BAR_ASSOCIATIONS.map((item) => <option key={item}>{item}</option>)}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8b82a0]" />
               </Field>
 
-              <Field label={isHindi ? 'मुख्य न्यायालय' : 'Primary Court'} icon={<Landmark />}>
+              <Field label={tr('Primary Court', 'मुख्य न्यायालय')} icon={<Landmark />}>
                 <select value={court} onChange={(e) => setCourt(e.target.value)} className={`${fieldClass} appearance-none pr-11`}>
                   {COURTS.map((item) => <option key={item}>{item}</option>)}
                 </select>
@@ -200,20 +187,20 @@ export default function RegisterPage() {
             <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#e6e0ef] bg-[#faf8ff] p-4">
               <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} required className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[#7c4df1]" />
               <span className="text-xs leading-relaxed text-[#716a7d]">
-                Main VakilSaathi ki{' '}
+                {tr('I agree to VakilSaathi’s', 'मैं VakilSaathi की')}{' '}
                 <Link href="/terms" target="_blank" className="font-semibold text-[#6949c6] underline underline-offset-2">Terms &amp; Privacy Policy</Link>{' '}
-                se sahmat hoon aur client reminders ke liye zaroori consent lene ki zimmedari samajhta/samajhti hoon.
+                {tr('and understand that I am responsible for obtaining client consent before sending reminders.', 'से सहमत हूँ और समझता/समझती हूँ कि रिमाइंडर भेजने से पहले मुवक्किल की सहमति लेना मेरी जिम्मेदारी है।')}
               </span>
             </label>
 
             <button type="submit" disabled={loading} className="h-14 w-full rounded-xl bg-gradient-to-r from-[#ee42bd] via-[#9a45eb] to-[#276eea] text-base font-bold text-white shadow-[0_12px_28px_rgba(111,65,225,0.34)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(111,65,225,0.42)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
-              {loading ? (isHindi ? 'अकाउंट बन रहा है...' : 'Creating account...') : (isHindi ? 'मुफ़्त अकाउंट बनाएँ' : 'Create Free Account')}
+              {loading ? tr('Creating account...', 'खाता बनाया जा रहा है...') : tr('Create Free Account', 'मुफ़्त खाता बनाएँ')}
             </button>
           </form>
 
           <p className="mt-7 text-center text-sm text-[#716a7d]">
-            {isHindi ? 'पहले से अकाउंट है?' : 'Already have an account?'}{' '}
-            <Link href="/login" className="font-bold text-[#6949c6] transition hover:text-[#e23bb5]">{isHindi ? 'लॉग इन करें →' : 'Log In →'}</Link>
+            {tr('Already have an account?', 'पहले से खाता है?')}{' '}
+            <Link href="/login" className="font-bold text-[#6949c6] transition hover:text-[#e23bb5]">{tr('Log In →', 'लॉगिन करें →')}</Link>
           </p>
         </div>
       </section>

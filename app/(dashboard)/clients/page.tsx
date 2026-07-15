@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Users, Phone, Trash2, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useLanguage } from '@/components/LanguageProvider'
 import { maskPhone, normalizeIndianWhatsAppNumber } from '@/lib/whatsapp-link'
+import { useLanguage } from '@/components/LanguageProvider'
 import toast from 'react-hot-toast'
 
 interface Client {
@@ -24,7 +24,7 @@ interface Case {
 }
 
 export default function ClientsPage() {
-  const { isHindi } = useLanguage()
+  const { tr } = useLanguage()
   const [clients, setClients] = useState<Client[]>([])
   const [cases, setCases] = useState<Case[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,7 +47,7 @@ export default function ClientsPage() {
     const supabase = createClient()
     const [clientsRes, casesRes] = await Promise.all([
       supabase.from('clients').select('*, cases(case_number, court_name)').eq('advocate_id', advId).order('created_at', { ascending: false }),
-      supabase.from('cases').select('id, case_number, court_name').eq('advocate_id', advId).eq('status', 'Active'),
+      supabase.from('cases').select('id, case_number, court_name').eq('advocate_id', advId).neq('status', 'Disposed'),
     ])
     if (!clientsRes.error) setClients(clientsRes.data ?? [])
     if (!casesRes.error) setCases(casesRes.data ?? [])
@@ -75,7 +75,7 @@ export default function ClientsPage() {
   async function handleAddClient(e: React.FormEvent) {
     e.preventDefault()
     if (!/^[6-9]\d{9}$/.test(form.phone)) {
-      toast.error('Sahi 10-digit mobile number daalo')
+      toast.error(tr('Enter a valid 10-digit mobile number', 'सही 10 अंकों का मोबाइल नंबर दर्ज करें'))
       return
     }
     if (isGuest) {
@@ -92,17 +92,17 @@ export default function ClientsPage() {
       setClients(previous => [client, ...previous])
       setShowModal(false)
       setForm({ full_name: '', phone: '', address: '', case_id: '', notes: '', consent_given: false })
-      toast.success('Demo client add ho gaya')
+      toast.success(tr('Demo client added successfully', 'डेमो मुवक्किल सफलतापूर्वक जोड़ा गया'))
       return
     }
     if (!advocateId) {
-      toast.error('Advocate profile nahi mila')
+      toast.error(tr('Advocate profile was not found', 'अधिवक्ता प्रोफ़ाइल नहीं मिली'))
       return
     }
     setSaving(true)
     const supabase = createClient()
 
-    // Client insert karo
+    // Insert the client record.
     const { data: newClient, error } = await supabase.from('clients').insert({
       advocate_id: advocateId,
       full_name: form.full_name,
@@ -113,20 +113,20 @@ export default function ClientsPage() {
     }).select().single()
 
     if (error) {
-      toast.error('Client save nahi hua: ' + error.message)
+      toast.error(tr('Client could not be saved: ', 'मुवक्किल सहेजा नहीं जा सका: ') + error.message)
       setSaving(false)
       return
     }
 
-    // Agar case select kiya toh case update karo
+    // Link the selected case to the new client.
     if (form.case_id && newClient) {
       await supabase.from('cases').update({ client_id: newClient.id }).eq('id', form.case_id)
     }
 
     if (form.consent_given) {
-      toast.success('Client add ho gaya! WhatsApp consent save hua.', { duration: 4000 })
+      toast.success(tr('Client added and WhatsApp consent saved.', 'मुवक्किल जोड़ दिया गया और WhatsApp सहमति सहेज ली गई।'), { duration: 4000 })
     } else {
-      toast.success('Client add ho gaya!')
+      toast.success(tr('Client added successfully!', 'मुवक्किल सफलतापूर्वक जोड़ दिया गया!'))
     }
 
     setShowModal(false)
@@ -136,17 +136,17 @@ export default function ClientsPage() {
   }
 
   async function handleDelete(clientId: string, name: string) {
-    if (!confirm(`Client "${name}" delete karna chahte hain?`)) return
+    if (!confirm(tr(`Delete client "${name}"?`, `मुवक्किल "${name}" को हटाएँ?`))) return
     if (isGuest) {
       setClients(previous => previous.filter(client => client.id !== clientId))
-      toast.success('Demo client delete ho gaya')
+      toast.success(tr('Demo client deleted', 'डेमो मुवक्किल हटा दिया गया'))
       return
     }
     const supabase = createClient()
     const { error } = await supabase.from('clients').delete().eq('id', clientId)
-    if (error) toast.error('Delete nahi hua')
+    if (error) toast.error(tr('Client could not be deleted', 'मुवक्किल हटाया नहीं जा सका'))
     else {
-      toast.success('Client delete ho gaya')
+      toast.success(tr('Client deleted successfully', 'मुवक्किल सफलतापूर्वक हटा दिया गया'))
       setClients(prev => prev.filter(c => c.id !== clientId))
     }
   }
@@ -160,11 +160,11 @@ export default function ClientsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">{isHindi ? 'मुवक्किल' : 'Clients'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{tr('Clients', 'मुवक्किल')}</h1>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
           <Plus className="w-4 h-4" />
-          Naya Client
+          {tr('New Client', 'नया मुवक्किल')}
         </button>
       </div>
 
@@ -172,19 +172,19 @@ export default function ClientsPage() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
         <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder={isHindi ? 'मुवक्किल का नाम या नंबर खोजें...' : 'Search by client name or number...'}
+          placeholder={tr('Search by client name or number...', 'मुवक्किल के नाम या नंबर से खोजें...')}
           className="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2.5 text-sm focus:border-blue-500 transition" />
       </div>
 
       {/* Clients List */}
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading...</div>
+        <div className="text-center py-12 text-gray-400">{tr('Loading...', 'लोड हो रहा है...')}</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
           <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500 font-medium">{isHindi ? 'कोई मुवक्किल नहीं मिला' : 'No clients found'}</p>
+          <p className="text-gray-500 font-medium">{tr('No clients found', 'कोई मुवक्किल नहीं मिला')}</p>
           <button onClick={() => setShowModal(true)} className="mt-3 text-orange-500 text-sm hover:underline">
-            + Pehla client add karein
+            + Add your first client
           </button>
         </div>
       ) : (
@@ -199,7 +199,7 @@ export default function ClientsPage() {
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-gray-900 text-sm">{c.full_name}</p>
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${c.consent_given ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-                      {c.consent_given ? '✓ WhatsApp consent' : 'Consent pending'}
+                      {c.consent_given ? tr('✓ WhatsApp consent', '✓ WhatsApp सहमति') : tr('Consent pending', 'सहमति लंबित')}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
@@ -243,18 +243,18 @@ export default function ClientsPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">Naya Client Add Karein</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+              <h2 className="text-lg font-bold text-gray-900">{tr('Add New Client', 'नया मुवक्किल जोड़ें')}</h2>
+              <button onClick={() => setShowModal(false)} aria-label={tr('Close', 'बंद करें')} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
             </div>
             <form onSubmit={handleAddClient} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Poora Naam *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{tr('Full Name', 'पूरा नाम')} *</label>
                 <input value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
-                  placeholder="Client ka naam" required
+                  placeholder={tr('Client name', 'मुवक्किल का नाम')} required
                   className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile / WhatsApp Number *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{tr('Mobile / WhatsApp Number', 'मोबाइल / WhatsApp नंबर')} *</label>
                 <div className="flex gap-2">
                   <span className="border border-gray-300 rounded-lg px-3 py-2.5 bg-gray-50 text-gray-600 text-sm flex items-center">+91</span>
                   <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
@@ -263,17 +263,17 @@ export default function ClientsPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Case Se Link Karein</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{tr('Link to a Case', 'केस से जोड़ें')}</label>
                 <select value={form.case_id} onChange={e => setForm(f => ({ ...f, case_id: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition">
-                  <option value="">— Case select karein (optional) —</option>
+                  <option value="">— {tr('Select a case (optional)', 'केस चुनें (वैकल्पिक)')} —</option>
                   {cases.map(c => <option key={c.id} value={c.id}>{c.case_number} — {c.court_name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{tr('Notes', 'टिप्पणियाँ')}</label>
                 <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Koi zaruri baat..." rows={2}
+                  placeholder={tr('Add any important notes...', 'कोई महत्वपूर्ण टिप्पणी जोड़ें...')} rows={2}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition resize-none" />
               </div>
 
@@ -283,8 +283,8 @@ export default function ClientsPage() {
                   <input type="checkbox" checked={form.consent_given} onChange={e => setForm(f => ({ ...f, consent_given: e.target.checked }))}
                     className="mt-1 w-4 h-4 accent-green-600" />
                   <span className="text-xs text-gray-600 leading-relaxed">
-                    <strong className="text-green-700">Main confirm karta/karti hoon ki client ne consent diya hai.</strong>
-                    {' '}Yeh number case management aur hearing reminders ke liye WhatsApp par use ho sakta hai. Marketing message nahi bheja jayega.
+                    <strong className="text-green-700">{tr('I confirm that the client has provided consent.', 'मैं पुष्टि करता/करती हूँ कि मुवक्किल ने सहमति दी है।')}</strong>
+                    {' '}{tr('This number may be used on WhatsApp for case management and hearing reminders. No marketing messages will be sent.', 'इस नंबर का उपयोग WhatsApp पर केस प्रबंधन और सुनवाई रिमाइंडर के लिए किया जा सकता है। कोई प्रचार संदेश नहीं भेजा जाएगा।')}
                   </span>
                 </label>
               </div>
@@ -292,11 +292,11 @@ export default function ClientsPage() {
               <div className="flex gap-3">
                 <button type="button" onClick={() => setShowModal(false)}
                   className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition text-sm">
-                  Cancel
+                  {tr('Cancel', 'रद्द करें')}
                 </button>
                 <button type="submit" disabled={saving}
                   className="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-60 transition text-sm">
-                  {saving ? 'Save ho raha hai...' : 'Client Add Karein ✅'}
+                  {saving ? tr('Saving...', 'सहेजा जा रहा है...') : tr('Add Client ✅', 'मुवक्किल जोड़ें ✅')}
                 </button>
               </div>
             </form>

@@ -8,7 +8,7 @@ interface SendWhatsAppParams {
 }
 
 export async function sendWhatsApp({ to, message }: SendWhatsAppParams) {
-  // Phone number clean karo — sirf digits rakho
+  // Keep digits only before applying the Indian country code.
   const cleanPhone = to.replace(/\D/g, '')
   const phoneWithCC = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`
 
@@ -36,7 +36,7 @@ export async function sendWhatsApp({ to, message }: SendWhatsAppParams) {
   }
 }
 
-// Advocate ko reminder
+// Reminder for the advocate
 export function buildAdvocateReminderMsg(params: {
   advocateName: string
   clientName: string
@@ -47,20 +47,20 @@ export function buildAdvocateReminderMsg(params: {
 }) {
   return `⚖️ *VakilSaathi Reminder*
 
-Pranam Adv. ${params.advocateName} Ji,
+Hello Adv. ${params.advocateName},
 
-Kal aapki peshi hai:
+Your hearing is tomorrow:
 📋 Case: ${params.caseNumber}
-👤 Murakkil: ${params.clientName}
+👤 Client: ${params.clientName}
 🏛️ Court: ${params.courtName}
-📅 Tarikh: ${params.hearingDate}${params.hearingTime ? `\n⏰ Samay: ${params.hearingTime}` : ''}
+📅 Date: ${params.hearingDate}${params.hearingTime ? `\n⏰ Time: ${params.hearingTime}` : ''}
 
-VakilSaathi app par jaake aaj hi notes update karein.
+Please review the case notes in VakilSaathi today.
 
-— VakilSaathi 🙏`
+— VakilSaathi`
 }
 
-// Client ko reminder
+// Reminder for the client
 export function buildClientReminderMsg(params: {
   clientName: string
   advocateName: string
@@ -71,17 +71,17 @@ export function buildClientReminderMsg(params: {
 }) {
   return `⚖️ *VakilSaathi — Court Reminder*
 
-Pranam ${params.clientName} Ji,
+Hello ${params.clientName},
 
-Aapki court hearing kal hai:
+Your court hearing is tomorrow:
 📋 Case No: ${params.caseNumber}
-👨‍⚖️ Vakeel: Adv. ${params.advocateName}
+👨‍⚖️ Advocate: Adv. ${params.advocateName}
 🏛️ Court: ${params.courtName}
-📅 Tarikh: ${params.hearingDate}${params.hearingTime ? `\n⏰ Samay: ${params.hearingTime}` : ''}
+📅 Date: ${params.hearingDate}${params.hearingTime ? `\n⏰ Time: ${params.hearingTime}` : ''}
 
-⚠️ Samay par pahunchein. Koi sawal ho toh apne vakeel se sampark karein.
+⚠️ Please arrive on time. Contact your advocate if you have any questions.
 
-*STOP likhein agar reminder nahi chahiye.*
+*Reply STOP if you no longer wish to receive reminders.*
 
-— VakilSaathi 🙏`
+— VakilSaathi`
 }

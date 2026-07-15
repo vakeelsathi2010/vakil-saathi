@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { Toaster } from 'react-hot-toast'
-import { LanguageProvider } from '@/components/LanguageProvider'
 import { cookies } from 'next/headers'
+import { LanguageProvider } from '@/components/LanguageProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'VakilSaathi — Advocate Ka Digital Saathi',
-  description: 'Advocates ke liye free case management aur court reminder app.',
+  title: 'VakilSaathi — Digital Practice Companion for Advocates',
+  description: 'Free case management and court hearing reminder application for advocates.',
+  other: { google: 'notranslate' },
 }
 
 export default async function RootLayout({
@@ -14,12 +15,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // v2 intentionally resets every existing browser to English once. Future
-  // language choices still persist through the new cookie.
-  const language = (await cookies()).get('vakil_language_v2')?.value === 'hi' ? 'hi' : 'en'
-
+  const language = (await cookies()).get('vakil_language_v3')?.value === 'hi' ? 'hi' : 'en'
   return (
-    <html lang={language} className="h-full">
+    <html lang={language} translate="no" className="h-full notranslate">
       <body className="h-full antialiased bg-gray-50">
         <LanguageProvider initialLanguage={language}>
           <Toaster

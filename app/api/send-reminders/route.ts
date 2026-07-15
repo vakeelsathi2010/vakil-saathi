@@ -4,7 +4,7 @@ import { sendWhatsApp, buildAdvocateReminderMsg, buildClientReminderMsg } from '
 import { sendSMS, buildAdvocateSMS, buildClientSMS } from '@/lib/sms'
 import { formatDate } from '@/lib/utils'
 
-// Supabase admin client (service role — RLS bypass karta hai)
+// Supabase admin client (the service role bypasses RLS).
 function getAdminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     const supabase = getAdminClient()
 
-    // Hearing data fetch karo
+    // Fetch hearing data.
     const { data: hearing, error } = await supabase
       .from('hearings')
       .select(`
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error || !hearing) {
-      return NextResponse.json({ success: false, error: 'Hearing nahi mili' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Hearing not found' }, { status: 404 })
     }
 
     const caseData = hearing.cases as unknown as { case_number: string; court_name: string; clients?: { full_name: string; phone: string; consent_given: boolean } }
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     const results = { advocate: false, client: false }
 
-    // Advocate ko reminder
+    // Send the advocate reminder.
     if (advocateData?.phone) {
       const msg = buildAdvocateReminderMsg({
         advocateName: advocateData.full_name,
@@ -69,13 +69,13 @@ export async function POST(req: NextRequest) {
         hearingDate: hearingDateStr,
       })
 
-      // WhatsApp try karo, fail hone par SMS
+      // Try WhatsApp first, then fall back to SMS.
       const waRes = await sendWhatsApp({ to: advocateData.phone, message: msg })
       if (!waRes.success) {
         await sendSMS({ to: advocateData.phone, message: smsTxt })
       }
 
-      // Reminder log karo
+      // Record the reminder attempt.
       await supabase.from('reminder_logs').insert({
         hearing_id,
         recipient_type: 'advocate',
@@ -84,12 +84,12 @@ export async function POST(req: NextRequest) {
         status: 'sent',
       })
 
-      // Hearing update karo
+      // Update the hearing.
       await supabase.from('hearings').update({ reminder_sent_advocate: true }).eq('id', hearing_id)
       results.advocate = true
     }
 
-    // Client ko reminder (sirf agar consent diya hai)
+    // Send the client reminder only when consent has been recorded.
     if (clientData?.phone && clientData.consent_given) {
       const msg = buildClientReminderMsg({
         clientName: clientData.full_name,
@@ -133,12 +133,12 @@ export async function POST(req: NextRequest) {
 
 // ============================================================
 // GET /api/send-reminders
-// Cron job: Kal ki saari hearings ke reminders bhejo
-// Vercel Cron ya external cron se call karo daily
+// Scheduled job: send reminders for all hearings tomorrow.
+// Call this endpoint daily from Vercel Cron or another scheduler.
 // Header: Authorization: Bearer {CRON_SECRET}
 // ============================================================
 export async function GET(req: NextRequest) {
-  // Cron secret verify karo
+  // Verify the scheduler secret.
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
   tomorrow.setDate(tomorrow.getDate() + 1)
   const tomorrowStr = tomorrow.toISOString().split('T')[0]
 
-  // Kal ki hearings jo already remind nahi hui
+  // Find tomorrow's hearings that have not already been reminded.
   const { data: hearings, error } = await supabase
     .from('hearings')
     .select('id')
@@ -162,7 +162,7 @@ export async function GET(req: NextRequest) {
 
   const results = []
   for (const h of hearings ?? []) {
-    // Each hearing ke liye reminder
+    // Send a reminder for each hearing.
     const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/send-reminders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

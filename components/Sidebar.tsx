@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X } from 'lucide-react'
+import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
@@ -10,11 +10,12 @@ import LanguageToggle from '@/components/LanguageToggle'
 import { useLanguage, type Language } from '@/components/LanguageProvider'
 
 const navItems = [
-  { href: '/dashboard', en: 'Dashboard', mobileEn: 'Home', hi: 'डैशबोर्ड', mobileHi: 'होम', icon: LayoutDashboard },
-  { href: '/dashboard/cases', en: 'Cases Diary', mobileEn: 'Diary', hi: 'मुकदमे', mobileHi: 'मुकदमे', icon: Briefcase },
-  { href: '/dashboard/hearings', en: 'Hearing Dates', mobileEn: 'Hearings', hi: 'पेशी की तारीखें', mobileHi: 'पेशी', icon: Calendar },
-  { href: '/dashboard/clients', en: 'Clients', mobileEn: 'Clients', hi: 'मुवक्किल', mobileHi: 'मुवक्किल', icon: Users },
-  { href: '/dashboard/reminders', en: 'Reminders', mobileEn: 'Alerts', hi: 'रिमाइंडर', mobileHi: 'अलर्ट', icon: Bell },
+  { href: '/dashboard', en: 'Dashboard', hi: 'डैशबोर्ड', mobileEn: 'Home', mobileHi: 'होम', icon: LayoutDashboard },
+  { href: '/dashboard/cases', en: 'Case Reports', hi: 'केस रिपोर्ट', mobileEn: 'Reports', mobileHi: 'रिपोर्ट', icon: Briefcase },
+  { href: '/dashboard/hearings', en: 'Case Dates', hi: 'केस की तारीखें', mobileEn: 'Dates', mobileHi: 'तारीखें', icon: Calendar },
+  { href: '/dashboard/clients', en: 'Clients', hi: 'मुवक्किल', mobileEn: 'Clients', mobileHi: 'मुवक्किल', icon: Users },
+  { href: '/dashboard/reminders', en: 'Reminders', hi: 'रिमाइंडर', mobileEn: 'Alerts', mobileHi: 'अलर्ट', icon: Bell },
+  { href: '/dashboard/documents', en: 'Document Vault', hi: 'दस्तावेज़ वॉल्ट', mobileEn: 'Vault', mobileHi: 'वॉल्ट', icon: FolderLock, premium: true },
 ]
 
 interface SidebarProps {
@@ -38,7 +39,7 @@ interface NavLinksProps {
 function NavLinks({ pathname, language, onClick }: NavLinksProps) {
   return (
     <nav className="flex-1 px-3 py-4 space-y-0.5">
-      {navItems.map(({ href, en, hi, icon: Icon }) => {
+      {navItems.map(({ href, en, hi, icon: Icon, premium }) => {
         const label = language === 'hi' ? hi : en
         const active = href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
         return (
@@ -53,7 +54,8 @@ function NavLinks({ pathname, language, onClick }: NavLinksProps) {
             }`}
           >
             <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
-            {label}
+            <span className="min-w-0 flex-1 truncate">{label}</span>
+            {premium && <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">{language === 'hi' ? 'पेड' : 'Paid'}</span>}
           </Link>
         )
       })}
@@ -81,9 +83,7 @@ function SidebarContent({ pathname, language, advocateName, isGuest, onClick, on
       <NavLinks pathname={pathname} language={language} onClick={onClick} />
 
       <div className="px-3 pb-4 border-t border-gray-100 pt-3 space-y-1">
-        <div className="mb-2 flex justify-center text-gray-700">
-          <LanguageToggle highlightTutorial tutorialPosition="above" />
-        </div>
+        <div className="mb-2 flex justify-center"><LanguageToggle /></div>
         {advocateName && (
           <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
@@ -93,7 +93,7 @@ function SidebarContent({ pathname, language, advocateName, isGuest, onClick, on
               <p className="text-xs font-semibold text-gray-900 truncate">
                 {isGuest ? advocateName : `Adv. ${advocateName.split(' ')[0]}`}
               </p>
-              <p className="text-[10px] text-gray-400">{language === 'hi' ? (isGuest ? 'गेस्ट मोड' : 'अधिवक्ता') : (isGuest ? 'Guest mode' : 'Advocate')}</p>
+              <p className="text-[10px] text-gray-400">{language === 'hi' ? (isGuest ? 'अतिथि मोड' : 'अधिवक्ता') : (isGuest ? 'Guest mode' : 'Advocate')}</p>
             </div>
           </div>
         )}
@@ -111,7 +111,7 @@ function SidebarContent({ pathname, language, advocateName, isGuest, onClick, on
 
 export default function Sidebar({ advocateName, isGuest = false }: SidebarProps) {
   const pathname = usePathname()
-  const { language } = useLanguage()
+  const { language, tr } = useLanguage()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   async function handleLogout() {
@@ -120,7 +120,7 @@ export default function Sidebar({ advocateName, isGuest = false }: SidebarProps)
       const supabase = createClient()
       await supabase.auth.signOut()
     }
-    toast.success('Logout ho gaya')
+    toast.success(tr('Logged out successfully', 'सफलतापूर्वक लॉग आउट हो गए'))
     window.location.assign('/login')
   }
 
@@ -133,7 +133,7 @@ export default function Sidebar({ advocateName, isGuest = false }: SidebarProps)
           <span className="text-gray-900 font-bold text-base">VakilSaathi</span>
         </div>
         <div className="flex items-center gap-2 text-gray-700">
-          <LanguageToggle compact highlightTutorial tutorialPosition="below" />
+          <LanguageToggle compact />
           <button onClick={() => setMobileOpen(!mobileOpen)} className="text-gray-600 p-1">
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -163,7 +163,7 @@ export default function Sidebar({ advocateName, isGuest = false }: SidebarProps)
           aria-label="Mobile navigation"
           className="pointer-events-auto mx-auto flex h-[68px] max-w-md items-center justify-between gap-1 rounded-[24px] border border-gray-200 bg-white/95 p-2 shadow-[0_14px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl"
         >
-          {navItems.map(({ href, en, mobileEn, mobileHi, icon: Icon }) => {
+          {navItems.filter(item => !item.premium).map(({ href, en, mobileEn, mobileHi, icon: Icon }) => {
             const active = href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
             const label = language === 'hi' ? mobileHi : mobileEn
 
