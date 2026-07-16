@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, ArrowLeft, Briefcase, CalendarDays, FileCheck2, IndianRupee, ListTodo, Scale, User } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Briefcase, CalendarDays, FileCheck2, ListTodo, Scale, User } from 'lucide-react'
+import FeeLedger from '@/components/FeeLedger'
+import CaseResearchLibrary from '@/components/CaseResearchLibrary'
+import CaseTaskBoard from '@/components/CaseTaskBoard'
 
 const STORAGE_KEY = 'vakil_guest_cases_v2'
 
@@ -102,10 +105,6 @@ export default function GuestCaseDetails({ caseId, isHindi }: { caseId: string; 
   }, [caseId])
 
   const metadata = useMemo(() => parseMetadata(caseData?.notes), [caseData?.notes])
-  const agreedFee = Number(metadata.agreed_fee || 0)
-  const advance = Number(metadata.advance_received || 0)
-  const due = Math.max(agreedFee - advance, 0)
-
   if (caseData === undefined) {
     return <div className="p-6 text-sm text-gray-500">{tr('Loading case...', 'केस लोड हो रहा है...')}</div>
   }
@@ -173,22 +172,17 @@ export default function GuestCaseDetails({ caseId, isHindi }: { caseId: string; 
         </div>
       </Section>
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <Section icon={<FileCheck2 className="h-5 w-5" />} title={tr('Documents Received', 'प्राप्त दस्तावेज़')}>
+      <Section icon={<FileCheck2 className="h-5 w-5" />} title={tr('Documents Received', 'प्राप्त दस्तावेज़')}>
           {metadata.documents?.length ? (
             <div className="flex flex-wrap gap-2">{metadata.documents.map(document => <span key={document} className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">{document}</span>)}</div>
           ) : <p className="text-sm text-gray-500">{tr('No documents marked as received.', 'कोई दस्तावेज़ प्राप्त चिह्नित नहीं है।')}</p>}
-        </Section>
+      </Section>
 
-        <Section icon={<IndianRupee className="h-5 w-5" />} title={tr('Fee Snapshot', 'फीस सारांश')}>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-xl bg-gray-50 p-3"><p className="text-xs text-gray-500">{tr('Agreed', 'तय')}</p><p className="font-bold">₹{agreedFee}</p></div>
-            <div className="rounded-xl bg-green-50 p-3"><p className="text-xs text-green-600">{tr('Received', 'प्राप्त')}</p><p className="font-bold text-green-700">₹{advance}</p></div>
-            <div className="rounded-xl bg-amber-50 p-3"><p className="text-xs text-amber-600">{tr('Due', 'शेष')}</p><p className="font-bold text-amber-700">₹{due}</p></div>
-          </div>
-          {metadata.fee_notes && <p className="mt-3 text-sm text-gray-600">{metadata.fee_notes}</p>}
-        </Section>
-      </div>
+      <FeeLedger caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} isGuest />
+
+      <CaseResearchLibrary caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} isGuest />
+
+      <CaseTaskBoard caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} isGuest />
 
       <Section icon={<ListTodo className="h-5 w-5" />} title={tr('Next Action', 'अगला कार्य')}>
         <div className="grid gap-4 sm:grid-cols-2">

@@ -2,9 +2,12 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate, getHearingUrgency, urgencyColor, urgencyLabel } from '@/lib/utils'
-import { ArrowLeft, Calendar, User, Gavel, History, Clock3, CheckCircle2, ExternalLink, FileCheck2, Phone, AlertTriangle, IndianRupee, ListTodo, Scale } from 'lucide-react'
+import { ArrowLeft, Calendar, User, Gavel, History, Clock3, CheckCircle2, ExternalLink, FileCheck2, Phone, AlertTriangle, ListTodo, Scale } from 'lucide-react'
 import { cookies } from 'next/headers'
 import GuestCaseDetails from '@/components/GuestCaseDetails'
+import FeeLedger from '@/components/FeeLedger'
+import CaseResearchLibrary from '@/components/CaseResearchLibrary'
+import CaseTaskBoard from '@/components/CaseTaskBoard'
 
 interface CaseDetailData {
   id: string
@@ -203,9 +206,6 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
     caseMetadata.court_number ||
     caseMetadata.documents?.length
   )
-  const agreedFee = Number(caseMetadata.agreed_fee || 0)
-  const advanceReceived = Number(caseMetadata.advance_received || 0)
-  const feeDue = Math.max(agreedFee - advanceReceived, 0)
   const legacyNotes = hasStructuredMetadata ? null : caseData.notes
   const todayKey = new Date().toISOString().split('T')[0]
   const upcomingHearings = [...(hearings ?? [])]
@@ -286,29 +286,22 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      {(agreedFee > 0 || advanceReceived > 0 || caseMetadata.next_action || caseMetadata.internal_notes) && (
+      {(caseMetadata.next_action || caseMetadata.internal_notes) && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {(agreedFee > 0 || advanceReceived > 0) && (
-            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-              <div className="mb-3 flex items-center gap-2"><IndianRupee className="h-4 w-4 text-green-600" /><h3 className="font-semibold text-[#1e3a5f]">{tr('Fee Snapshot', 'फीस सारांश')}</h3></div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">{tr('Agreed', 'तय फीस')}</span><strong>₹{agreedFee.toLocaleString('en-IN')}</strong></div>
-                <div className="flex justify-between"><span className="text-gray-500">{tr('Received', 'प्राप्त')}</span><strong className="text-green-700">₹{advanceReceived.toLocaleString('en-IN')}</strong></div>
-                <div className="flex justify-between border-t border-gray-100 pt-2"><span className="text-gray-600">{tr('Due', 'बकाया')}</span><strong className="text-orange-600">₹{feeDue.toLocaleString('en-IN')}</strong></div>
-              </div>
-              {caseMetadata.fee_notes && <p className="mt-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-600">{caseMetadata.fee_notes}</p>}
-            </div>
-          )}
-          {(caseMetadata.next_action || caseMetadata.internal_notes) && (
             <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center gap-2"><ListTodo className="h-4 w-4 text-purple-600" /><h3 className="font-semibold text-[#1e3a5f]">{tr('Next Action', 'अगला कार्य')}</h3></div>
               {caseMetadata.next_action && <p className="text-sm font-medium text-gray-800">{caseMetadata.next_action}</p>}
               {caseMetadata.next_action_deadline && <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700"><Clock3 className="h-3.5 w-3.5" /> {formatDate(caseMetadata.next_action_deadline)}</p>}
               {caseMetadata.internal_notes && <div className="mt-3 rounded-lg border border-yellow-100 bg-yellow-50 p-3"><p className="text-[10px] font-semibold uppercase tracking-wide text-yellow-700">{tr('Private advocate note', 'अधिवक्ता की निजी टिप्पणी')}</p><p className="mt-1 whitespace-pre-wrap text-xs leading-5 text-gray-700">{caseMetadata.internal_notes}</p></div>}
             </div>
-          )}
         </div>
       )}
+
+      <FeeLedger caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} />
+
+      <CaseResearchLibrary caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} />
+
+      <CaseTaskBoard caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} />
 
       {/* Documents received from party */}
       <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">

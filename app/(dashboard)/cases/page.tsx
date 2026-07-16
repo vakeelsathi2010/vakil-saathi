@@ -102,6 +102,7 @@ interface CaseForm {
   agreed_fee: string
   advance_received: string
   fee_notes: string
+  fee_follow_up_date: string
   next_action: string
   next_action_deadline: string
   internal_notes: string
@@ -193,6 +194,7 @@ const EMPTY_CASE_FORM: CaseForm = {
   agreed_fee: '',
   advance_received: '',
   fee_notes: '',
+  fee_follow_up_date: '',
   next_action: '',
   next_action_deadline: '',
   internal_notes: '',
@@ -222,6 +224,8 @@ function encodeCaseMetadata(form: CaseForm) {
     agreed_fee: form.agreed_fee,
     advance_received: form.advance_received,
     fee_notes: form.fee_notes,
+    fee_follow_up_date: form.fee_follow_up_date,
+    payment_history: [],
     next_action: form.next_action,
     next_action_deadline: form.next_action_deadline,
     internal_notes: form.internal_notes,
@@ -350,6 +354,10 @@ export default function CasesPage() {
     }
     if (form.client_phone && !/^[6-9]\d{9}$/.test(form.client_phone)) {
       toast.error(tr('Enter a valid 10-digit mobile number', 'सही 10 अंकों का मोबाइल नंबर दर्ज करें'))
+      return
+    }
+    if (Number(form.advance_received || 0) > Number(form.agreed_fee || 0)) {
+      toast.error(tr('Advance received cannot exceed the agreed fee', 'प्राप्त अग्रिम तय फीस से अधिक नहीं हो सकता'))
       return
     }
 
@@ -983,6 +991,11 @@ export default function CasesPage() {
                   <div className="sm:col-span-2">
                     <label className="mb-1 block text-sm font-medium text-gray-700">{tr('Fee Notes', 'फीस टिप्पणी')}</label>
                     <input value={form.fee_notes} onChange={event => setForm(current => ({ ...current, fee_notes: event.target.value }))} placeholder={tr('Instalment plan or expense note', 'किस्त योजना या खर्च की टिप्पणी')} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">{tr('First Payment Follow-up Date', 'पहली भुगतान फॉलो-अप तारीख')}</label>
+                    <input type="date" value={form.fee_follow_up_date} onChange={event => setForm(current => ({ ...current, fee_follow_up_date: event.target.value }))} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500" />
+                    <p className="mt-1 text-xs text-gray-400">{tr('Outstanding fees will appear in the Fees dashboard.', 'बकाया फीस Fees डैशबोर्ड में दिखाई देगी।')}</p>
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">{tr('Next Action', 'अगला कार्य')}</label>

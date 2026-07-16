@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock } from 'lucide-react'
+import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock, IndianRupee, BookOpenCheck, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
@@ -14,6 +14,9 @@ const navItems = [
   { href: '/dashboard/cases', en: 'Case Reports', hi: 'केस रिपोर्ट', mobileEn: 'Reports', mobileHi: 'रिपोर्ट', icon: Briefcase },
   { href: '/dashboard/hearings', en: 'Case Dates', hi: 'केस की तारीखें', mobileEn: 'Dates', mobileHi: 'तारीखें', icon: Calendar },
   { href: '/dashboard/clients', en: 'Clients', hi: 'मुवक्किल', mobileEn: 'Clients', mobileHi: 'मुवक्किल', icon: Users },
+  { href: '/dashboard/fees', en: 'Fees & Payments', hi: 'फीस और भुगतान', mobileEn: 'Fees', mobileHi: 'फीस', icon: IndianRupee },
+  { href: '/dashboard/research', en: 'Legal Research', hi: 'कानूनी शोध', mobileEn: 'Research', mobileHi: 'शोध', icon: BookOpenCheck, footer: false },
+  { href: '/dashboard/tasks', en: 'Team Tasks', hi: 'टीम कार्य', mobileEn: 'Tasks', mobileHi: 'कार्य', icon: UsersRound, footer: false },
   { href: '/dashboard/reminders', en: 'Reminders', hi: 'रिमाइंडर', mobileEn: 'Alerts', mobileHi: 'अलर्ट', icon: Bell },
   { href: '/dashboard/documents', en: 'Document Vault', hi: 'दस्तावेज़ वॉल्ट', mobileEn: 'Vault', mobileHi: 'वॉल्ट', icon: FolderLock, premium: true },
 ]
@@ -163,7 +166,7 @@ export default function Sidebar({ advocateName, isGuest = false }: SidebarProps)
           aria-label="Mobile navigation"
           className="pointer-events-auto mx-auto flex h-[68px] max-w-md items-center justify-between gap-1 rounded-[24px] border border-gray-200 bg-white/95 p-2 shadow-[0_14px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl"
         >
-          {navItems.filter(item => !item.premium).map(({ href, en, mobileEn, mobileHi, icon: Icon }) => {
+          {navItems.filter(item => !item.premium && item.footer !== false).map(({ href, en, mobileEn, mobileHi, icon: Icon }) => {
             const active = href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
             const label = language === 'hi' ? mobileHi : mobileEn
 
