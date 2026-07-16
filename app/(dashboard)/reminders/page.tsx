@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Bell, MessageCircle, Phone, CheckCircle, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useLanguage } from '@/components/LanguageProvider'
+import DeadlineSafetyCenter, { type DeadlineCase } from '@/components/DeadlineSafetyCenter'
 
 interface ReminderLog {
   id: string
@@ -23,6 +24,7 @@ interface ReminderLog {
 export default function RemindersPage() {
   const { isHindi, tr } = useLanguage()
   const [logs, setLogs] = useState<ReminderLog[]>([])
+  const [deadlineCases, setDeadlineCases] = useState<DeadlineCase[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchLogs = useCallback(async () => {
@@ -33,6 +35,12 @@ export default function RemindersPage() {
     const user = session?.user ?? null
     if (!user) {
       setLogs([])
+      try {
+        const storedCases = window.sessionStorage.getItem('vakil_guest_cases_v2')
+        setDeadlineCases(storedCases ? JSON.parse(storedCases) as DeadlineCase[] : [])
+      } catch {
+        setDeadlineCases([])
+      }
       setLoading(false)
       return
     }
@@ -47,6 +55,13 @@ export default function RemindersPage() {
       .limit(100)
 
     setLogs(data ?? [])
+
+    const { data: casesData } = await supabase
+      .from('cases')
+      .select('id, case_number, case_title, court_name, status, notes')
+      .order('created_at', { ascending: false })
+
+    setDeadlineCases((casesData ?? []) as DeadlineCase[])
     setLoading(false)
   }, [])
 
@@ -65,10 +80,17 @@ export default function RemindersPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-gray-900">{tr('Client Communication', 'मुवक्किल संचार')}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{tr('Reminders & Deadlines', 'रिमाइंडर और समय-सीमाएँ')}</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {tr('Record of hearing reminders and post-hearing case updates sent to clients', 'मुवक्किलों को भेजे गए सुनवाई रिमाइंडर और सुनवाई के बाद के केस अपडेट का रिकॉर्ड')}
+          {tr('Protect critical filing dates and review communication sent to clients', 'महत्वपूर्ण दाखिला तारीखों की सुरक्षा करें और मुवक्किलों को भेजे गए संदेश देखें')}
         </p>
+      </div>
+
+      <DeadlineSafetyCenter cases={deadlineCases} />
+
+      <div className="pt-2">
+        <h2 className="text-lg font-bold text-gray-900">{tr('Client Communication History', 'मुवक्किल संचार इतिहास')}</h2>
+        <p className="mt-0.5 text-xs text-gray-500">{tr('Hearing reminders and post-hearing updates confirmed as sent', 'भेजे गए सुनवाई रिमाइंडर और सुनवाई के बाद के अपडेट')}</p>
       </div>
 
       {/* Summary cards */}

@@ -19,6 +19,7 @@ import toast from 'react-hot-toast'
 import { formatDate, getHearingUrgency, urgencyColor, urgencyLabel } from '@/lib/utils'
 import { buildWhatsAppCaseUpdateUrl, buildWhatsAppReminderUrl, maskPhone } from '@/lib/whatsapp-link'
 import { useLanguage } from '@/components/LanguageProvider'
+import CourtDayPlanner from '@/components/CourtDayPlanner'
 
 interface ReminderLog {
   id: string
@@ -49,6 +50,8 @@ interface Hearing {
     case_number: string
     case_title?: string
     court_name: string
+    judge_name?: string
+    notes?: string
     clients?: ClientRef
   }
 }
@@ -57,6 +60,8 @@ interface Case {
   id: string
   case_number: string
   court_name: string
+  judge_name?: string
+  notes?: string
   clients?: ClientRef
 }
 
@@ -80,6 +85,17 @@ function latestManualLog(hearing: Hearing) {
   return [...(hearing.reminder_logs ?? [])]
     .filter(log => log.channel === 'whatsapp' && log.recipient_type === 'client' && ['manual_sent', 'manual_case_update_sent'].includes(log.status))
     .sort((a, b) => b.sent_at.localeCompare(a.sent_at))[0]
+}
+
+function getCourtNumber(notes?: string) {
+  if (!notes) return undefined
+  try {
+    const metadata = JSON.parse(notes) as { court_number?: unknown }
+    const value = String(metadata.court_number || '').trim()
+    return value || undefined
+  } catch {
+    return undefined
+  }
 }
 
 export default function HearingsPage() {
@@ -131,11 +147,11 @@ export default function HearingsPage() {
     const supabase = createClient()
     const [hearingsRes, casesRes] = await Promise.all([
       supabase.from('hearings')
-        .select(`*, cases(id, case_number, case_title, court_name, clients(full_name, phone, consent_given)), reminder_logs(id, status, sent_at, channel, recipient_type)`)
+        .select(`*, cases(id, case_number, case_title, court_name, judge_name, notes, clients(full_name, phone, consent_given)), reminder_logs(id, status, sent_at, channel, recipient_type)`)
         .eq('advocate_id', advId)
         .order('hearing_date', { ascending: false }),
       supabase.from('cases')
-        .select('id, case_number, court_name, clients(full_name, phone, consent_given)')
+        .select('id, case_number, court_name, judge_name, notes, clients(full_name, phone, consent_given)')
         .eq('advocate_id', advId)
         .neq('status', 'Disposed'),
     ])
@@ -480,6 +496,17 @@ export default function HearingsPage() {
     () => hearings.filter(hearing => hearingMonthKey(hearing.hearing_date) === selectedMonthKey),
     [hearings, selectedMonthKey],
   )
+  const courtPlanHearings = useMemo(() => hearings.map(hearing => ({
+    id: hearing.id,
+    hearing_date: hearing.hearing_date,
+    hearing_time: hearing.hearing_time,
+    hearing_purpose: hearing.hearing_purpose,
+    caseNumber: hearing.cases.case_number,
+    caseTitle: hearing.cases.case_title,
+    courtName: hearing.cases.court_name,
+    courtNumber: getCourtNumber(hearing.cases.notes),
+    judgeName: hearing.cases.judge_name,
+  })), [hearings])
   const filteredHearings = monthHearings.filter(hearing => {
     if (filter === 'upcoming') return hearing.hearing_date >= today
     if (filter === 'past') return hearing.hearing_date < today
@@ -508,6 +535,8 @@ export default function HearingsPage() {
           {tr('New Hearing', 'नई सुनवाई')}
         </button>
       </div>
+
+      <CourtDayPlanner hearings={courtPlanHearings} onAddHearing={() => setShowModal(true)} />
 
       <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">

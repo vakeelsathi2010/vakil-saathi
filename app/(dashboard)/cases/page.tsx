@@ -9,6 +9,26 @@ import { useLanguage } from '@/components/LanguageProvider'
 import LanguageToggle from '@/components/LanguageToggle'
 
 const CASE_TYPES = ['Civil', 'Criminal', 'Family', 'Labour', 'Consumer', 'Revenue', 'Writ', 'Other']
+const LIMITATION_TYPES = [
+  'Appeal / Revision Filing',
+  'Written Statement / Reply',
+  'Evidence / Affidavit Filing',
+  'Compliance / Objection Removal',
+  'Legal Notice Response',
+  'Execution / Enforcement',
+  'Review / Recall Application',
+  'Other Statutory Deadline',
+]
+const LIMITATION_TYPE_HI: Record<string, string> = {
+  'Appeal / Revision Filing': 'अपील / पुनरीक्षण दाखिला',
+  'Written Statement / Reply': 'लिखित बयान / जवाब',
+  'Evidence / Affidavit Filing': 'साक्ष्य / शपथपत्र दाखिला',
+  'Compliance / Objection Removal': 'अनुपालन / आपत्ति निवारण',
+  'Legal Notice Response': 'कानूनी नोटिस का जवाब',
+  'Execution / Enforcement': 'निष्पादन / प्रवर्तन',
+  'Review / Recall Application': 'पुनर्विचार / रिकॉल आवेदन',
+  'Other Statutory Deadline': 'अन्य वैधानिक समय-सीमा',
+}
 const MATTER_STAGES = ['New Enquiry', 'Documents Pending', 'Drafting', 'Legal Notice', 'Ready for Filing', 'Filed', 'Scrutiny / Objection', 'Registered', 'Active', 'Evidence', 'Arguments', 'Judgment Reserved', 'Disposed', 'Appeal / Execution']
 const STATUSES = MATTER_STAGES
 const MATTER_NATURES: Record<string, string[]> = {
@@ -66,7 +86,9 @@ interface CaseForm {
   relief_sought: string
   acts_sections: string
   urgency: string
+  limitation_type: string
   limitation_date: string
+  limitation_notes: string
   filing_number: string
   filing_date: string
   court_name: string
@@ -155,7 +177,9 @@ const EMPTY_CASE_FORM: CaseForm = {
   relief_sought: '',
   acts_sections: '',
   urgency: 'Normal',
+  limitation_type: 'Other Statutory Deadline',
   limitation_date: '',
+  limitation_notes: '',
   filing_number: '',
   filing_date: '',
   court_name: 'Not assigned / Pre-filing',
@@ -187,7 +211,9 @@ function encodeCaseMetadata(form: CaseForm) {
     relief_sought: form.relief_sought,
     acts_sections: form.acts_sections,
     urgency: form.urgency,
+    limitation_type: form.limitation_type,
     limitation_date: form.limitation_date,
+    limitation_notes: form.limitation_notes,
     filing_number: form.filing_number,
     filing_date: form.filing_date,
     court_number: form.court_number,
@@ -815,9 +841,25 @@ export default function CasesPage() {
                   <input value={form.acts_sections} onChange={e => setForm(f => ({ ...f, acts_sections: e.target.value }))} placeholder={tr('e.g. CPC, Section 138 NI Act', 'जैसे CPC, धारा 138 NI Act')} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition" />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{tr('Deadline Type', 'समय-सीमा का प्रकार')}</label>
+                  <select value={form.limitation_type} onChange={e => setForm(f => ({ ...f, limitation_type: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition">
+                    {LIMITATION_TYPES.map(type => <option key={type} value={type}>{isHindi ? LIMITATION_TYPE_HI[type] : type}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{tr('Limitation / Critical Deadline', 'लिमिटेशन / महत्वपूर्ण समय-सीमा')}</label>
                   <input type="date" value={form.limitation_date} onChange={e => setForm(f => ({ ...f, limitation_date: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition" />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{tr('Deadline Basis / Note', 'समय-सीमा का आधार / टिप्पणी')}</label>
+                  <input value={form.limitation_notes} onChange={e => setForm(f => ({ ...f, limitation_notes: e.target.value }))} placeholder={tr('e.g. Order dated 12 July; appeal limitation calculated by advocate', 'जैसे 12 जुलाई का आदेश; अपील की समय-सीमा अधिवक्ता द्वारा गणना की गई')} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition" />
+                </div>
+                {form.limitation_date && (
+                  <div className="sm:col-span-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5 text-xs leading-5 text-orange-800">
+                    <strong>{tr('Safety alerts armed:', 'सुरक्षा अलर्ट सक्रिय:')}</strong>{' '}
+                    {tr('This deadline will appear in Reminders at the 7-day, 3-day and 1-day warning points.', 'यह समय-सीमा रिमाइंडर में 7 दिन, 3 दिन और 1 दिन पहले चेतावनी के साथ दिखाई देगी।')}
+                  </div>
+                )}
               </div>
               </section>
 

@@ -39,7 +39,9 @@ interface StoredCaseMetadata {
   relief_sought?: string
   acts_sections?: string
   urgency?: string
+  limitation_type?: string
   limitation_date?: string
+  limitation_notes?: string
   filing_number?: string
   filing_date?: string
   opposite_advocate?: string
@@ -49,6 +51,17 @@ interface StoredCaseMetadata {
   next_action?: string
   next_action_deadline?: string
   internal_notes?: string
+}
+
+const DEADLINE_TYPE_HI: Record<string, string> = {
+  'Appeal / Revision Filing': 'अपील / पुनरीक्षण दाखिला',
+  'Written Statement / Reply': 'लिखित बयान / जवाब',
+  'Evidence / Affidavit Filing': 'साक्ष्य / शपथपत्र दाखिला',
+  'Compliance / Objection Removal': 'अनुपालन / आपत्ति निवारण',
+  'Legal Notice Response': 'कानूनी नोटिस का जवाब',
+  'Execution / Enforcement': 'निष्पादन / प्रवर्तन',
+  'Review / Recall Application': 'पुनर्विचार / रिकॉल आवेदन',
+  'Other Statutory Deadline': 'अन्य वैधानिक समय-सीमा',
 }
 
 function parseCaseMetadata(notes?: string | null): StoredCaseMetadata {
@@ -67,7 +80,9 @@ function parseCaseMetadata(notes?: string | null): StoredCaseMetadata {
       relief_sought: parsed.relief_sought,
       acts_sections: parsed.acts_sections,
       urgency: parsed.urgency,
+      limitation_type: parsed.limitation_type,
       limitation_date: parsed.limitation_date,
+      limitation_notes: parsed.limitation_notes,
       filing_number: parsed.filing_number,
       filing_date: parsed.filing_date,
       opposite_advocate: parsed.opposite_advocate,
@@ -266,7 +281,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
           {caseMetadata.relief_sought && <div className="mt-3 rounded-lg border border-green-100 bg-green-50 p-3"><p className="text-xs font-medium text-green-600">{tr('Relief / Client Objective', 'मांगी गई राहत / मुवक्किल का उद्देश्य')}</p><p className="mt-1 whitespace-pre-wrap text-sm text-green-900">{caseMetadata.relief_sought}</p></div>}
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {caseMetadata.acts_sections && <div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-400">{tr('Acts / Sections', 'अधिनियम / धाराएँ')}</p><p className="mt-1 text-sm font-medium text-gray-800">{caseMetadata.acts_sections}</p></div>}
-            {caseMetadata.limitation_date && <div className="rounded-lg border border-orange-100 bg-orange-50 p-3"><p className="flex items-center gap-1 text-xs text-orange-600"><AlertTriangle className="h-3.5 w-3.5" /> {tr('Limitation / Critical Deadline', 'लिमिटेशन / महत्वपूर्ण समय-सीमा')}</p><p className="mt-1 text-sm font-semibold text-orange-900">{formatDate(caseMetadata.limitation_date)}</p></div>}
+            {caseMetadata.limitation_date && <div className="rounded-lg border border-orange-100 bg-orange-50 p-3"><p className="flex items-center gap-1 text-xs text-orange-600"><AlertTriangle className="h-3.5 w-3.5" /> {caseMetadata.limitation_type ? (isHindi ? DEADLINE_TYPE_HI[caseMetadata.limitation_type] || caseMetadata.limitation_type : caseMetadata.limitation_type) : tr('Limitation / Critical Deadline', 'लिमिटेशन / महत्वपूर्ण समय-सीमा')}</p><p className="mt-1 text-sm font-semibold text-orange-900">{formatDate(caseMetadata.limitation_date)}</p>{caseMetadata.limitation_notes && <p className="mt-1 text-xs leading-5 text-orange-700">{caseMetadata.limitation_notes}</p>}<p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-orange-600">{tr('Alerts: 7 days · 3 days · 1 day', 'अलर्ट: 7 दिन · 3 दिन · 1 दिन')}</p></div>}
           </div>
         </div>
       )}

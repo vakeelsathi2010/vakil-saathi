@@ -47,6 +47,30 @@ function courtNumberFromNotes(notes?: string | null) {
   }
 }
 
+function deadlineDaysFromToday(value: string, todayKey: string) {
+  const [year, month, day] = value.split('-').map(Number)
+  const [todayYear, todayMonth, todayDay] = todayKey.split('-').map(Number)
+  return Math.round((Date.UTC(year, month - 1, day) - Date.UTC(todayYear, todayMonth - 1, todayDay)) / 86_400_000)
+}
+
+function deadlinesFromCase(caseItem: { id: string; case_number: string; notes?: string | null }, todayKey: string) {
+  if (!caseItem.notes) return []
+  try {
+    const metadata = JSON.parse(caseItem.notes) as {
+      limitation_date?: string
+      limitation_type?: string
+      next_action?: string
+      next_action_deadline?: string
+    }
+    return [
+      metadata.limitation_date ? { id: `${caseItem.id}-limitation`, caseId: caseItem.id, caseNumber: caseItem.case_number, label: metadata.limitation_type || 'Limitation deadline', date: metadata.limitation_date, daysLeft: deadlineDaysFromToday(metadata.limitation_date, todayKey) } : null,
+      metadata.next_action_deadline ? { id: `${caseItem.id}-action`, caseId: caseItem.id, caseNumber: caseItem.case_number, label: metadata.next_action || 'Next action', date: metadata.next_action_deadline, daysLeft: deadlineDaysFromToday(metadata.next_action_deadline, todayKey) } : null,
+    ].filter((item): item is NonNullable<typeof item> => Boolean(item && /^\d{4}-\d{2}-\d{2}$/.test(item.date)))
+  } catch {
+    return []
+  }
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const {
@@ -81,7 +105,7 @@ export default async function DashboardPage() {
   tomorrowDate.setDate(tomorrowDate.getDate() + 1)
   const tomorrow = indiaDateKey(tomorrowDate)
 
-  const [casesRes, clientsRes, hearingsRes, upcomingRes, remindersRes, causeListRes] =
+  const [casesRes, clientsRes, hearingsRes, upcomingRes, remindersRes, causeListRes, deadlineCasesRes] =
     await Promise.all([
       supabase
         .from('cases')
@@ -121,6 +145,11 @@ export default async function DashboardPage() {
         .lte('hearing_date', tomorrow)
         .order('hearing_date', { ascending: true })
         .order('hearing_time', { ascending: true }),
+      supabase
+        .from('cases')
+        .select('id, case_number, notes')
+        .eq('advocate_id', advocate.id)
+        .neq('status', 'Disposed'),
     ])
 
   const stats = [
@@ -161,6 +190,10 @@ export default async function DashboardPage() {
   const causeList = (causeListRes.data ?? []) as unknown as CauseListHearing[]
   const todayCauseList = causeList.filter((hearing) => hearing.hearing_date === today)
   const tomorrowCauseList = causeList.filter((hearing) => hearing.hearing_date === tomorrow)
+  const criticalDeadlines = (deadlineCasesRes.data ?? [])
+    .flatMap(caseItem => deadlinesFromCase(caseItem, today))
+    .filter(item => item.daysLeft <= 7)
+    .sort((first, second) => first.daysLeft - second.daysLeft)
   const toAlertCases = (hearings: CauseListHearing[]): CauseAlertCase[] => hearings.map(hearing => ({
     caseNumber: hearing.cases?.case_number || (isHindi ? 'केस' : 'Case'),
     court: hearing.cases?.court_name || (isHindi ? 'न्यायालय नहीं जोड़ा' : 'Court not added'),
@@ -214,6 +247,31 @@ export default async function DashboardPage() {
           {isHindi ? 'VakilSaathi खुलने पर डिवाइस अलर्ट दिखाई देंगे। पूरी तरह स्वचालित बैकग्राउंड पुश बाद में सशुल्क सूचना सेवा का हिस्सा होगा।' : 'Device alerts appear when VakilSaathi is opened. Fully automatic background push will be part of the paid notification service later.'}
         </div>
       </section>
+
+      {criticalDeadlines.length > 0 && (
+        <section className="rounded-2xl border border-orange-200 bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 p-4 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-100"><AlertCircle className="h-5 w-5 text-orange-700" /></div>
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">{isHindi ? `${criticalDeadlines.length} महत्वपूर्ण समय-सीमा पर ध्यान दें` : `${criticalDeadlines.length} critical deadline${criticalDeadlines.length === 1 ? '' : 's'} need attention`}</h2>
+                <div className="mt-2 space-y-1.5">
+                  {criticalDeadlines.slice(0, 3).map(item => (
+                    <Link key={item.id} href={`/dashboard/cases/${item.caseId}`} className="flex flex-wrap items-center gap-x-2 text-xs text-gray-700 hover:text-blue-700">
+                      <strong>{item.caseNumber}</strong>
+                      <span>· {item.label}</span>
+                      <span className={`rounded-full px-2 py-0.5 font-bold ${item.daysLeft <= 0 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {item.daysLeft < 0 ? (isHindi ? `${Math.abs(item.daysLeft)} दिन विलंबित` : `${Math.abs(item.daysLeft)}d overdue`) : item.daysLeft === 0 ? (isHindi ? 'आज अंतिम दिन' : 'Due today') : (isHindi ? `${item.daysLeft} दिन शेष` : `${item.daysLeft}d left`)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <Link href="/dashboard/reminders" className="inline-flex items-center justify-center rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white hover:bg-orange-700">{isHindi ? 'सुरक्षा केंद्र खोलें' : 'Open Safety Center'}</Link>
+          </div>
+        </section>
+      )}
 
       {/* Today's hearing alert */}
       {todayHearings.length > 0 && (

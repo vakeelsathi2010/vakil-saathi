@@ -28,7 +28,9 @@ interface CaseMetadata {
   relief_sought?: string
   acts_sections?: string
   urgency?: string
+  limitation_type?: string
   limitation_date?: string
+  limitation_notes?: string
   filing_number?: string
   filing_date?: string
   court_number?: string
@@ -40,6 +42,17 @@ interface CaseMetadata {
   next_action?: string
   next_action_deadline?: string
   internal_notes?: string
+}
+
+const DEADLINE_TYPE_HI: Record<string, string> = {
+  'Appeal / Revision Filing': 'अपील / पुनरीक्षण दाखिला',
+  'Written Statement / Reply': 'लिखित बयान / जवाब',
+  'Evidence / Affidavit Filing': 'साक्ष्य / शपथपत्र दाखिला',
+  'Compliance / Objection Removal': 'अनुपालन / आपत्ति निवारण',
+  'Legal Notice Response': 'कानूनी नोटिस का जवाब',
+  'Execution / Enforcement': 'निष्पादन / प्रवर्तन',
+  'Review / Recall Application': 'पुनर्विचार / रिकॉल आवेदन',
+  'Other Statutory Deadline': 'अन्य वैधानिक समय-सीमा',
 }
 
 function parseMetadata(notes?: string): CaseMetadata {
@@ -142,7 +155,8 @@ export default function GuestCaseDetails({ caseId, isHindi }: { caseId: string; 
           <Detail label={tr('Facts / problem summary', 'तथ्य / समस्या का सार')} value={metadata.facts_summary} />
           <Detail label={tr('Relief / client objective', 'राहत / मुवक्किल का उद्देश्य')} value={metadata.relief_sought} />
           <Detail label={tr('Acts / sections', 'अधिनियम / धाराएँ')} value={metadata.acts_sections} />
-          <Detail label={tr('Limitation deadline', 'समय-सीमा')} value={metadata.limitation_date} />
+          <Detail label={metadata.limitation_type ? (isHindi ? DEADLINE_TYPE_HI[metadata.limitation_type] || metadata.limitation_type : metadata.limitation_type) : tr('Limitation deadline', 'समय-सीमा')} value={metadata.limitation_date} />
+          <Detail label={tr('Deadline basis / note', 'समय-सीमा का आधार / टिप्पणी')} value={metadata.limitation_notes} />
         </div>
       </Section>
 
