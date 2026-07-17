@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:messages": "node backend/functions/test-messageGenerator.js"
+    "test:messages": "node backend/functions/test-messageGenerator.js",
+    "test:reminders": "node backend/functions/test-reminderScheduler.js",
+    "start:reminder-cron": "node backend/cron/reminderCron.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -15,8 +17,10 @@
     "axios": "^1.9.0",
     "date-fns": "^4.1.0",
     "express": "^5.2.1",
+    "firebase-admin": "^14.2.0",
     "lucide-react": "^0.475.0",
     "next": "16.2.10",
+    "node-cron": "^4.6.0",
     "prop-types": "^15.8.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",

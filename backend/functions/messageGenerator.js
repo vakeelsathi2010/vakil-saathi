@@ -27,7 +27,7 @@ function formatDate(value) {
   return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(date)
 }
 
-function getDeadline(caseData, formattedNextDate) {
+function getDeadline(caseData) {
   const explicitDeadline = formatDate(caseData.deadline)
   if (explicitDeadline) return explicitDeadline
   const nextDate = parseDate(caseData.nextDate)
@@ -60,7 +60,7 @@ function generateClientMessages(caseData) {
   const advocateName = cleanName(caseData.advocateName) || 'Your Advocate'
   const advocateContact = String(caseData.advocateContact || '').trim()
   const nextDate = formatDate(caseData.nextDate)
-  const deadline = getDeadline(caseData, nextDate)
+  const deadline = getDeadline(caseData)
   const actions = getActions({ ...caseData, caseType })
   const warnings = []
 
