@@ -9,6 +9,7 @@ import FeeLedger from '@/components/FeeLedger'
 import CaseResearchLibrary from '@/components/CaseResearchLibrary'
 import CaseTaskBoard from '@/components/CaseTaskBoard'
 import VoiceUpdateHistory from '@/components/VoiceUpdateHistory'
+import StatusTracker from '@/src/components/StatusTracker'
 
 interface CaseDetailData {
   id: string
@@ -303,6 +304,8 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
       <CaseResearchLibrary caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} />
 
       <CaseTaskBoard caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} />
+
+      <StatusTracker caseId={caseData.id} />
 
       <VoiceUpdateHistory initialNotes={caseData.notes} />
 
