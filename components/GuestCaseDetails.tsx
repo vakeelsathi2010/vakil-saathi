@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowLeft, Briefcase, CalendarDays, FileCheck2, ListTodo
 import FeeLedger from '@/components/FeeLedger'
 import CaseResearchLibrary from '@/components/CaseResearchLibrary'
 import CaseTaskBoard from '@/components/CaseTaskBoard'
+import VoiceUpdateHistory from '@/components/VoiceUpdateHistory'
 
 const STORAGE_KEY = 'vakil_guest_cases_v2'
 
@@ -183,6 +184,8 @@ export default function GuestCaseDetails({ caseId, isHindi }: { caseId: string; 
       <CaseResearchLibrary caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} isGuest />
 
       <CaseTaskBoard caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} isGuest />
+
+      <VoiceUpdateHistory initialNotes={caseData.notes} />
 
       <Section icon={<ListTodo className="h-5 w-5" />} title={tr('Next Action', 'अगला कार्य')}>
         <div className="grid gap-4 sm:grid-cols-2">

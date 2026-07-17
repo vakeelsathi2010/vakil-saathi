@@ -8,6 +8,7 @@ import GuestCaseDetails from '@/components/GuestCaseDetails'
 import FeeLedger from '@/components/FeeLedger'
 import CaseResearchLibrary from '@/components/CaseResearchLibrary'
 import CaseTaskBoard from '@/components/CaseTaskBoard'
+import VoiceUpdateHistory from '@/components/VoiceUpdateHistory'
 
 interface CaseDetailData {
   id: string
@@ -302,6 +303,8 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
       <CaseResearchLibrary caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} />
 
       <CaseTaskBoard caseId={caseData.id} caseNumber={caseData.case_number} initialNotes={caseData.notes} />
+
+      <VoiceUpdateHistory initialNotes={caseData.notes} />
 
       {/* Documents received from party */}
       <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">

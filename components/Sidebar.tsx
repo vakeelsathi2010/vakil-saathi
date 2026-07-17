@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock, IndianRupee, BookOpenCheck, UsersRound } from 'lucide-react'
+import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock, IndianRupee, BookOpenCheck, UsersRound, Mic } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/dashboard/fees', en: 'Fees & Payments', hi: 'फीस और भुगतान', mobileEn: 'Fees', mobileHi: 'फीस', icon: IndianRupee },
   { href: '/dashboard/research', en: 'Legal Research', hi: 'कानूनी शोध', mobileEn: 'Research', mobileHi: 'शोध', icon: BookOpenCheck, footer: false },
   { href: '/dashboard/tasks', en: 'Team Tasks', hi: 'टीम कार्य', mobileEn: 'Tasks', mobileHi: 'कार्य', icon: UsersRound, footer: false },
+  { href: '/dashboard/voice-input', en: 'Voice Updates', hi: 'वॉइस अपडेट', mobileEn: 'Voice', mobileHi: 'वॉइस', icon: Mic, footer: false },
   { href: '/dashboard/reminders', en: 'Reminders', hi: 'रिमाइंडर', mobileEn: 'Alerts', mobileHi: 'अलर्ट', icon: Bell },
   { href: '/dashboard/documents', en: 'Document Vault', hi: 'दस्तावेज़ वॉल्ट', mobileEn: 'Vault', mobileHi: 'वॉल्ट', icon: FolderLock, premium: true },
 ]
