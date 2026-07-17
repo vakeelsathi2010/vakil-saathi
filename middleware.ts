@@ -32,9 +32,12 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/register')
+  // API routes return their own JSON authorization errors. Redirecting an API
+  // call to the login page makes clients receive HTML instead of a useful error.
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
   const isPublicPage = request.nextUrl.pathname === '/terms' ||
     request.nextUrl.pathname === '/' ||
-    request.nextUrl.pathname === '/api/guest-session' ||
+    isApiRoute ||
     request.nextUrl.pathname.startsWith('/auth/callback') ||
     request.nextUrl.pathname.startsWith('/reset-password')
 
