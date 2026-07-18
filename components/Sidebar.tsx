@@ -16,6 +16,7 @@ const navItems = [
   { href: '/dashboard/clients', en: 'Clients', hi: 'मुवक्किल', mobileEn: 'Clients', mobileHi: 'मुवक्किल', icon: Users },
   { href: '/dashboard/fees', en: 'Fees & Payments', hi: 'फीस और भुगतान', mobileEn: 'Fees', mobileHi: 'फीस', icon: IndianRupee },
   { href: '/dashboard/analytics', en: 'Analytics', hi: 'विश्लेषण', mobileEn: 'Analytics', mobileHi: 'विश्लेषण', icon: ChartNoAxesCombined, footer: false },
+  { href: '/dashboard/advanced-analytics', en: 'Advanced Analytics', hi: 'उन्नत विश्लेषण', mobileEn: 'Advanced', mobileHi: 'उन्नत', icon: ChartNoAxesCombined, footer: false, premium: true },
   { href: '/dashboard/portal', en: 'Client Portal', hi: 'क्लाइंट पोर्टल', mobileEn: 'Portal', mobileHi: 'पोर्टल', icon: Share2, footer: false },
   { href: '/dashboard/strategy', en: 'Case Strategy', hi: 'केस रणनीति', mobileEn: 'Strategy', mobileHi: 'रणनीति', icon: BrainCircuit, footer: false, premium: true },
   { href: '/dashboard/ocr', en: 'Court Order OCR', hi: 'कोर्ट ऑर्डर OCR', mobileEn: 'OCR', mobileHi: 'OCR', icon: ScanText, footer: false, premium: true },
