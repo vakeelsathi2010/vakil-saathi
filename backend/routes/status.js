@@ -3,6 +3,7 @@
 const express = require('express')
 const { createClient } = require('@supabase/supabase-js')
 const { generateClientMessages } = require('../functions/messageGenerator')
+const { sendNotification } = require('../services/notificationService')
 
 const STATUSES = ['Filed', 'Pending', 'Hearing', 'Adjourned', 'Hearing Completed', 'Judgment Awaited', 'Judgment Received', 'Appeal', 'Closed']
 
@@ -50,7 +51,9 @@ async function updateCaseStatus(supabase, userId, caseId, body) {
   const historyDetails = { previous_status: beforeStatus, new_status: status, next_date: nextDate || null, notes: statusNotes || null, changed_by: 'Advocate', client_notification: { status: client.phone && client.consent_given ? 'pending_approval' : 'not_ready', whatsapp: messages.success ? messages.messages.whatsapp : null } }
   const { data: history, error: historyError } = await supabase.from('case_history').insert({ case_id: caseId, advocate_id: advocate.id, event_type: 'status_changed', details: historyDetails }).select('id, created_at, event_type, details').single()
   if (historyError && historyError.code !== '42P01') throw historyError
-  return { success: true, caseId, previousStatus: beforeStatus, status, nextDate: nextDate || null, history, clientNotification: historyDetails.client_notification, messageDraft: messages.success ? messages.messages : null }
+  let advocateNotification = null
+  try { advocateNotification = await sendNotification(supabase, userId, { title: 'Case status updated', body: `${caseRecord.case_number}: ${status}` }, { type: 'case_update', caseId }) } catch { /* Notifications are optional until Firebase migration/config is ready. */ }
+  return { success: true, caseId, previousStatus: beforeStatus, status, nextDate: nextDate || null, history, clientNotification: historyDetails.client_notification, advocateNotification, messageDraft: messages.success ? messages.messages : null }
 }
 
 function createStatusRoute() {
