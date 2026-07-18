@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock, IndianRupee, BookOpenCheck, UsersRound, Mic, Gavel } from 'lucide-react'
+import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock, IndianRupee, BookOpenCheck, UsersRound, Mic, Gavel, ChartNoAxesCombined } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/dashboard/hearings', en: 'Case Dates', hi: 'केस की तारीखें', mobileEn: 'Dates', mobileHi: 'तारीखें', icon: Calendar },
   { href: '/dashboard/clients', en: 'Clients', hi: 'मुवक्किल', mobileEn: 'Clients', mobileHi: 'मुवक्किल', icon: Users },
   { href: '/dashboard/fees', en: 'Fees & Payments', hi: 'फीस और भुगतान', mobileEn: 'Fees', mobileHi: 'फीस', icon: IndianRupee },
+  { href: '/dashboard/analytics', en: 'Analytics', hi: 'विश्लेषण', mobileEn: 'Analytics', mobileHi: 'विश्लेषण', icon: ChartNoAxesCombined, footer: false },
   { href: '/dashboard/research', en: 'Legal Research', hi: 'कानूनी शोध', mobileEn: 'Research', mobileHi: 'शोध', icon: BookOpenCheck, footer: false },
   { href: '/dashboard/tasks', en: 'Team Tasks', hi: 'टीम कार्य', mobileEn: 'Tasks', mobileHi: 'कार्य', icon: UsersRound, footer: false },
   { href: '/dashboard/voice-input', en: 'Voice Updates', hi: 'वॉइस अपडेट', mobileEn: 'Voice', mobileHi: 'वॉइस', icon: Mic, footer: false },
