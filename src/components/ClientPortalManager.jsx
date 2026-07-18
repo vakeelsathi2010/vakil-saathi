@@ -1,0 +1,21 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+import { Copy, Link2, RefreshCw, Share2 } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { createClient } from '@/lib/supabase/client'
+
+async function hashToken(token) {
+  const bytes = new TextEncoder().encode(token)
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
+export default function ClientPortalManager() {
+  const [cases, setCases] = useState([]); const [caseId, setCaseId] = useState(''); const [advocateId, setAdvocateId] = useState(''); const [link, setLink] = useState(''); const [creating, setCreating] = useState(false)
+  const load = useCallback(async () => { const supabase = createClient(); const { data: { user } } = await supabase.auth.getUser(); if (!user) return; const { data: advocate } = await supabase.from('advocates').select('id').eq('user_id', user.id).single(); if (!advocate) return; setAdvocateId(advocate.id); const { data } = await supabase.from('cases').select('id, case_number, case_title').eq('advocate_id', advocate.id).order('created_at', { ascending: false }); setCases(data || []); setCaseId(data?.[0]?.id || '') }, [])
+  useEffect(() => { const timer = window.setTimeout(() => { void load() }, 0); return () => window.clearTimeout(timer) }, [load])
+  const createLink = async () => { if (!caseId || !advocateId) return toast.error('Select a case first.'); setCreating(true); try { const rawToken = crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', ''); const tokenHash = await hashToken(rawToken); const supabase = createClient(); const { error } = await supabase.from('client_portal_links').insert({ case_id: caseId, advocate_id: advocateId, token_hash: tokenHash }); if (error) throw error; const url = `${window.location.origin}/portal/${rawToken}`; setLink(url); try { await navigator.clipboard.writeText(url); toast.success('Secure client link created and copied.'); } catch { toast.success('Secure client link created. Copy it below.'); } } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not create client link.') } finally { setCreating(false) } }
+  const copy = async () => { await navigator.clipboard.writeText(link); toast.success('Link copied.') }
+  return <div className="mx-auto max-w-3xl"><div><h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900"><Share2 className="h-6 w-6 text-blue-600" />Client Portal</h1><p className="mt-1 text-sm text-slate-500">Share read-only case updates without giving clients access to your dashboard.</p></div><section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><label className="text-sm font-bold text-slate-800">Choose case</label><select value={caseId} onChange={event => setCaseId(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm">{cases.map(item => <option key={item.id} value={item.id}>{item.case_number} - {item.case_title || 'Untitled case'}</option>)}</select><button type="button" onClick={createLink} disabled={creating || !cases.length} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-bold text-white disabled:opacity-60"><Link2 className="h-4 w-4" />{creating ? 'Creating secure link...' : 'Create client link'}</button>{link && <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-sm font-bold text-emerald-900">Read-only client link</p><p className="mt-1 break-all text-xs text-emerald-700">{link}</p><button type="button" onClick={copy} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-bold text-emerald-700"><Copy className="h-4 w-4" />Copy link</button><p className="mt-3 text-xs leading-5 text-emerald-800">Clients can view status, next date and action items. They cannot edit any case information.</p></div>}</section><p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><RefreshCw className="mr-2 inline h-4 w-4" />Create a fresh link at any time if you want to replace an older shared link.</p></div>
+}
