@@ -7,8 +7,9 @@ import toast from 'react-hot-toast'
 import { generateChecklist } from '@/backend/functions/checklistGenerator'
 
 const EMPTY_ITEMS = []
+const NOOP = () => {}
 
-export default function CaseChecklist({ caseType, caseTitle = 'Case', initialItems = EMPTY_ITEMS, onChange }) {
+export default function CaseChecklist({ caseType, caseTitle = 'Case', initialItems = EMPTY_ITEMS, onChange = NOOP }) {
   const initialTemplate = useMemo(() => generateChecklist(caseType, { customItems: initialItems }).items, [caseType, initialItems])
   const [items, setItems] = useState(initialTemplate)
   const [customItem, setCustomItem] = useState('')
@@ -17,7 +18,7 @@ export default function CaseChecklist({ caseType, caseTitle = 'Case', initialIte
     const timer = window.setTimeout(() => setItems(initialTemplate), 0)
     return () => window.clearTimeout(timer)
   }, [initialTemplate])
-  useEffect(() => { onChange?.(items) }, [items, onChange])
+  useEffect(() => { onChange(items) }, [items, onChange])
   const completed = items.filter(item => item.collected).length
   const updateItem = (id, changes) => setItems(current => current.map(item => item.id === id ? { ...item, ...changes } : item))
   const addCustomItem = () => {

@@ -10,6 +10,7 @@ import CaseResearchLibrary from '@/components/CaseResearchLibrary'
 import CaseTaskBoard from '@/components/CaseTaskBoard'
 import VoiceUpdateHistory from '@/components/VoiceUpdateHistory'
 import StatusTracker from '@/src/components/StatusTracker'
+import CaseChecklist from '@/src/components/CaseChecklist'
 
 interface CaseDetailData {
   id: string
@@ -308,6 +309,12 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
       <StatusTracker caseId={caseData.id} />
 
       <VoiceUpdateHistory initialNotes={caseData.notes} />
+
+      <CaseChecklist
+        caseType={caseData.case_type}
+        caseTitle={caseData.case_title || caseData.case_number}
+        initialItems={caseMetadata.documents || []}
+      />
 
       {/* Documents received from party */}
       <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
