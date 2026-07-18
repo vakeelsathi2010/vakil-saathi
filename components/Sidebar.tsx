@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock, IndianRupee, BookOpenCheck, UsersRound, Mic, Gavel, ChartNoAxesCombined, Share2, BrainCircuit, ScanText } from 'lucide-react'
+import { Scale, LayoutDashboard, Briefcase, Users, Calendar, Bell, LogOut, Menu, X, FolderLock, IndianRupee, BookOpenCheck, UsersRound, Mic, Gavel, ChartNoAxesCombined, Share2, BrainCircuit, ScanText, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/dashboard/portal', en: 'Client Portal', hi: 'क्लाइंट पोर्टल', mobileEn: 'Portal', mobileHi: 'पोर्टल', icon: Share2, footer: false },
   { href: '/dashboard/strategy', en: 'Case Strategy', hi: 'केस रणनीति', mobileEn: 'Strategy', mobileHi: 'रणनीति', icon: BrainCircuit, footer: false, premium: true },
   { href: '/dashboard/ocr', en: 'Court Order OCR', hi: 'कोर्ट ऑर्डर OCR', mobileEn: 'OCR', mobileHi: 'OCR', icon: ScanText, footer: false, premium: true },
+  { href: '/dashboard/bail', en: 'Bail Tracker', hi: 'जमानत ट्रैकर', mobileEn: 'Bail', mobileHi: 'जमानत', icon: ShieldCheck, footer: false },
   { href: '/dashboard/research', en: 'Legal Research', hi: 'कानूनी शोध', mobileEn: 'Research', mobileHi: 'शोध', icon: BookOpenCheck, footer: false },
   { href: '/dashboard/tasks', en: 'Team Tasks', hi: 'टीम कार्य', mobileEn: 'Tasks', mobileHi: 'कार्य', icon: UsersRound, footer: false },
   { href: '/dashboard/voice-input', en: 'Voice Updates', hi: 'वॉइस अपडेट', mobileEn: 'Voice', mobileHi: 'वॉइस', icon: Mic, footer: false },
