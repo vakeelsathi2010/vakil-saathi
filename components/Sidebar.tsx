@@ -49,7 +49,10 @@ interface NavLinksProps {
 
 function NavLinks({ pathname, language, onClick }: NavLinksProps) {
   return (
-    <nav className="flex-1 px-3 py-4 space-y-0.5">
+    <nav
+      aria-label="Main navigation"
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-0.5 pr-2 [scrollbar-gutter:stable] [scrollbar-width:thin] [scrollbar-color:#94a3b8_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb:hover]:bg-slate-400"
+    >
       {navItems.map(({ href, en, hi, icon: Icon, premium }) => {
         const label = language === 'hi' ? hi : en
         const active = href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
